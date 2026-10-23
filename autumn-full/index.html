@@ -416,10 +416,13 @@ sleeve.addEventListener('click', e => {
 });
 document.addEventListener('keydown', e => { if (e.key === 'Escape' && current) closeLeaf(); });
 /* Flutter: every letter hangs from its top like a leaf on a branch; the pointer is the breeze */
-sleeve.addEventListener('pointerover', e => {
-  const c = e.target.closest('.ch'); if (!c || reduce || c.getAnimations().length) return;
+sleeve.addEventListener('pointerover', e => { const c = e.target.closest('.ch'); if (c) flutter(c); });
+/* the same swing is used whenever something knocks a letter: the pointer, a flying letter, or a neighbour blown into it */
+function flutter(c, force = false, scale = 1) {
+  if (reduce || !c || !c.textContent.trim()) return;
+  if (c.getAnimations().length) { if (!force) return; c.getAnimations().forEach(a => a.cancel()); }
   const big = parseFloat(getComputedStyle(c).fontSize) > 30;   /* big letters swing less, so the title stays calm */
-  const dir = WX, a = (big ? 6 + Math.random() * 4 : 14 + Math.random() * 8) * dir;     /* letters always swing downwind first */
+  const dir = WX, a = (big ? 6 + Math.random() * 4 : 14 + Math.random() * 8) * dir * scale;     /* letters always swing downwind first */
   /* each letter turns one shade of the current group's color while it swings, like leaves on one tree, then fades back */
   const tints = getComputedStyle(sleeve).getPropertyValue('--tints').split(',').map(x => x.trim()).filter(Boolean);
   const ink = getComputedStyle(c).color, tint = tints[(Math.random() * tints.length) | 0] || ink;
@@ -427,7 +430,7 @@ sleeve.addEventListener('pointerover', e => {
     { transform: `rotate(${-a * .6}deg)`, color: tint, offset: .4 }, { transform: `rotate(${a * .35}deg)`, color: tint, offset: .6 },
     { transform: `rotate(${-a * .15}deg)`, offset: .8 }, { transform: 'rotate(0)', color: ink, offset: 1 }],
     { duration: 1400, easing: 'ease-out' });
-});
+}
 /* keyboard focus gets a soft ripple through the whole name instead */
 sleeve.addEventListener('focusin', e => {
   if (reduce || e.target.matches(':hover')) return;
@@ -543,6 +546,13 @@ function flyTick() {
     }
     /* falling-leaf motion: a pendulum glide (sideways in the middle of each swing, dropping at the ends),
        tilted along the glide, pushed by a wind that is never steady, and harder in a gust */
+    /* a flying letter that brushes a letter on the page knocks it: it swings and turns the group's color */
+    if (!f.target) {
+      if (!flyTick.rects || now - flyTick.rt > 250) { const b = sleeve.getBoundingClientRect(); flyTick.rt = now;
+        flyTick.rects = [...detail.querySelectorAll('.ch')].filter(c => c.offsetParent && c.textContent.trim()).map(c => { const r = c.getBoundingClientRect(); return { c, x: r.left - b.left + r.width / 2, y: r.top - b.top + r.height / 2, rr: Math.max(r.width, r.height) / 2 }; }); }
+      const cx = f.x + f.size * .3, cy = f.y + f.size * .5;
+      flyTick.rects.forEach(o => { if (Math.hypot(o.x - cx, o.y - cy) < o.rr + f.size * .35 && !o.c.getAnimations().length) flutter(o.c); });
+    }
     f.ph += f.w * dt;
     const swing = Math.sin(f.ph), turn = Math.abs(Math.cos(f.ph));
     const gustW = (70 + 45 * Math.sin(t * .9 + f.n) + 25 * Math.sin(t * 2.3 + f.n * 2)) * boost;   /* turbulence */
@@ -583,6 +593,10 @@ function idle() {
         { transform: `translate(${(x * 1.1).toFixed(1)}px, ${(y * .85).toFixed(1)}px) rotate(${(r * .7).toFixed(0)}deg)`, offset: .58 },   /* hangs in the air */
         { transform: `translate(${(x * .35).toFixed(1)}px, ${(y * .3).toFixed(1)}px) rotate(${(-r * .15).toFixed(0)}deg)`, offset: .82 }, { transform: 'none' }],
         { duration: rnd(2400, 2900), delay: (at[i] - lo) / span * 1300, easing: 'ease-in-out' });
+      /* on its way out it knocks into the letters downwind of it; they swing and take the group's color */
+      const sib = [...c.parentNode.children], k = sib.indexOf(c), hit = WX > 0 ? sib.slice(k + 1, k + 3) : sib.slice(Math.max(0, k - 2), k).reverse();
+      hit.forEach((h, j) => setTimeout(() => flutter(h, true, .8 - j * .25), (at[i] - lo) / span * 1300 + 500 + j * 120));
+      return;
     }
     const big = parseFloat(getComputedStyle(c).fontSize) > 30, a = (big ? rnd(3, 5) : rnd(9, 15)) * WX * gust, d = (big ? 1.5 : 3) * gust;
     c.animate([{ transform: 'none' }, { transform: `translate(${(dx * d).toFixed(1)}px, ${(dy * d * .5).toFixed(1)}px) rotate(${a.toFixed(1)}deg)`, offset: .3 },
