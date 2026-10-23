@@ -330,9 +330,9 @@ const clear = els => els.forEach(c => c.getAnimations().forEach(a => a.cancel())
 async function toggleSide(btn) {
   const id = btn.dataset.sideId, wrap = btn.nextElementSibling, rows = [...wrap.querySelectorAll('.kids > li')];
   open[id] = !open[id]; btn.setAttribute('aria-expanded', open[id]); clearTimeout(wrap._t1); clearTimeout(wrap._t2);
-  const letters = rows.flatMap(li => [...li.querySelectorAll('.ch')]);
+  const letters = rows.flatMap(li => [...li.querySelectorAll('.ch')]), nums = rows.flatMap(li => [...li.querySelectorAll('.num')]);
   if (open[id]) {
-    clear(letters); wrap.classList.remove('gusting');
+    clear(letters); clear(nums); wrap.classList.remove('gusting');
     wrap.inert = false; wrap.classList.add('open'); setSide(id); showLeaf(sideOf(id).items[0]);
     const theta = windDir();
     let longest = 0;
@@ -342,9 +342,10 @@ async function toggleSide(btn) {
     wrap.inert = true;
     if (reduce) return wrap.classList.remove('open');
     wrap.classList.add('gusting');                         /* letters can leave the box instead of being clipped */
+    nums.forEach(n => n.animate([{ opacity: getComputedStyle(n).opacity }, { opacity: 0 }], { duration: 220, fill: 'forwards' }));   /* numbers go with them */
     const { longest } = gustOut(rows.slice().reverse().flatMap(li => [...li.querySelectorAll('.ch')]), 6);
     wrap._t1 = setTimeout(() => { if (!open[id]) wrap.classList.remove('open'); }, longest * .4);   /* start closing mid-gust */
-    wrap._t2 = setTimeout(() => { if (!open[id]) { clear(letters); wrap.classList.remove('gusting'); } }, longest + 560);
+    wrap._t2 = setTimeout(() => { if (!open[id]) { clear(letters); clear(nums); wrap.classList.remove('gusting'); } }, longest + 560);
   }
 }
 
