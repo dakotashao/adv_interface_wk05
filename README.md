@@ -6,7 +6,6 @@ A list of autumn leaves in three groups. Hover a leaf and the big leaf behind th
 | Set | Concept | Prototype |
 |---|---|---|
 | 1 | Autumn, Full Bleed | [Open](https://dakotashao.github.io/adv_interface_wk05/autumn-full/) |
-| 2 | Autumn, Sleeve | [Open](https://dakotashao.github.io/adv_interface_wk05/autumn-sleeve/) |
 
 Each set lives in its own folder with a self-contained `index.html`. Spec is inside each prototype (Spec button).
 Leaf silhouettes traced from Wikimedia Commons photos; sources and licenses in [CREDITS.md](CREDITS.md).
