@@ -1,0 +1,598 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Autumn Sleeve</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,600;1,6..72,400&family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap">
+<style>
+  /* Layout: a record-sleeve back. One giant leaf bleeds off the card in flat saturated color; the list is printed
+     over it like a tracklist. Hover a leaf and the giant shape cuts to that leaf. Each side pairs a pale
+     ground with a saturated leaf of the same autumn color. Text overprints the shape (multiply) so it stays dark and readable. */
+  :root {
+    --page: #E9E6E0;
+    --ui: "Newsreader", "Iowan Old Style", Georgia, serif;
+    --mono: "Newsreader", "Iowan Old Style", Georgia, serif;
+    --out: cubic-bezier(.22, .8, .3, 1);
+    --in: cubic-bezier(.5, 0, .75, .3);
+    color-scheme: light;
+  }
+  * { box-sizing: border-box; }
+  html, body { min-height: 100%; }
+  body { margin: 0; background: var(--page); font-family: var(--ui);
+    display: grid; place-items: center; padding-block: 40px;
+    padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+
+  /* sides: chestnut-leaf palette. Beige ground (Mesa for Bronze), roast-brown type, one leaf color per side */
+  .sleeve[data-side="red"]   { --sky: #E7DACB; --leaf: #812903; --ink: #391E03; --tints: #A8461C,#812903,#5A1C02; }
+  .sleeve[data-side="gold"]  { --sky: #E7DACB; --leaf: #A5730D; --ink: #391E03; --tints: #A5730D,#7A5208,#5A3B04; }
+  .sleeve[data-side="brown"] { --sky: #B8A173; --leaf: #605407; --ink: #391E03; --tints: #6B5E0A,#524806,#3D3504; }
+  .sleeve { position: relative; width: 100%; max-width: 400px; aspect-ratio: 2 / 3; overflow: hidden; border-radius: 12px;
+    background: var(--sky); color: var(--ink); isolation: isolate;
+    box-shadow: 0 1px 0 rgba(255,255,255,.4) inset, 0 20px 50px -24px rgba(20, 30, 40, .45);
+    transition: background-color .3s ease, color .3s ease; }
+
+  /* ---------- the giant leaf ---------- */
+  /* every leaf sits in the same place: large on the left half, mostly whole, never under the list */
+  .giant { position: absolute; z-index: 0; left: -10%; top: 12%; width: 64%; height: 86%; pointer-events: none;
+    transition: left .55s var(--out), top .55s var(--out), width .55s var(--out), height .55s var(--out); }
+  .drift { position: absolute; inset: 0; z-index: 0; pointer-events: none; }
+  .drift span { position: absolute; left: 0; top: 0; font-style: italic; line-height: 1; will-change: transform; mix-blend-mode: var(--blend); }
+  .giant svg { width: 100%; height: 100%; display: block; fill: var(--leaf); transition: fill .3s ease; }
+
+  /* everything printed over the leaf */
+  .print { position: relative; z-index: 1; mix-blend-mode: multiply; height: 100%; padding: 22px 22px 18px;
+    display: grid; grid-template-rows: auto minmax(0, 1fr); transition: opacity .2s ease; }
+  /* two columns borrowed from a contents page: a big numeral on the left, the list on the right */
+  .head, .body { display: grid; grid-template-columns: 50% 1fr; column-gap: 8px; }
+  /* one word as the masthead: large italic, top-left */
+  .title { grid-column: 1 / -1; margin: 0; font-style: italic; font-weight: 400; font-size: 60px; line-height: 1; letter-spacing: -.015em; }
+  .tip { font-size: 13px; line-height: 20px; opacity: .85; }
+  .body { align-items: center; min-height: 0; padding-block: 16px 0; }
+  .body > .sides { max-height: 100%; overflow-y: auto; scrollbar-width: none; padding-block: 8px; }
+  .body > .sides::-webkit-scrollbar { display: none; }
+  /* the hovered leaf's Latin name, genus over species, set large in italic */
+  .big { align-self: center; font-style: italic; font-weight: 400; font-size: 24px; line-height: 28px; letter-spacing: -.01em; overflow-wrap: anywhere; }
+  .big span { display: block; }
+  .list { list-style: none; margin: 0; padding: 0; }
+
+  .row { display: grid; grid-template-columns: 26px 1fr 14px; align-items: baseline; column-gap: 10px; width: 100%;
+    border: 0; background: none; padding: 0; color: inherit; font: inherit; text-align: left; cursor: pointer;
+    -webkit-tap-highlight-color: transparent; }
+  .row:focus-visible { outline: 1.5px solid var(--ink); outline-offset: 2px; }
+  .num { font-size: 13px; font-variant-numeric: oldstyle-nums tabular-nums; opacity: .8; }
+  .name { font-weight: 400; font-size: 16px; line-height: 28px; min-width: 0;
+    overflow: hidden; white-space: nowrap; }
+  .meta { font-style: italic; font-size: 13px; opacity: .85; }
+
+  /* side rows */
+  .side { align-items: center; }
+  .side .num { font-style: italic; }
+  /* parent rows outrank children: larger, full weight */
+  .side { min-height: 44px; }
+  .side .name { font-style: italic; font-size: 21px; line-height: 28px; }
+  .side .num { font-size: 15px; }
+  .sides > li + li { margin-top: 6px; }
+  .tog { position: relative; width: 14px; height: 14px; align-self: center; }
+  .tog i { position: absolute; right: 3px; top: 6.25px; width: 7px; height: 1.5px; background: currentColor; transform-origin: 100% 50%;
+    transition: transform .36s var(--out), width .36s var(--out), right .36s var(--out); }
+  .tog i:first-child { transform: rotate(42deg); }
+  .tog i:last-child { transform: rotate(-42deg); }
+  .side:hover .tog i:first-child { transform: translateX(2px) rotate(52deg); }
+  .side:hover .tog i:last-child { transform: translateX(2px) rotate(-52deg); }
+  .side[aria-expanded="true"] .tog i { width: 12px; right: 1px; transform: rotate(0); }
+  .side[aria-expanded="true"]:hover .tog i { width: 8px; right: 3px; }
+  .side:active .tog { transform: scale(.8); }
+
+  /* leaf rows: a rule draws under the hovered name; the others step back */
+  .leafrow .t { display: inline-block; position: relative; }
+  .w { display: inline-block; white-space: nowrap; }
+  /* while a gust carries the letters off, the underline and chevrons go with them */
+  .gusting .leafrow .t::after { transform: scaleX(0) !important; transition-duration: .12s !important; }
+  .gusting .leafrow .chev { opacity: 0 !important; }
+  .ch { display: inline-block; white-space: pre; transform-origin: 50% 0; }
+  .leafrow .num { font-size: 12px; }
+  .leafrow .t::after { content: ""; position: absolute; left: 0; right: 0; bottom: 5px; height: 1px; background: currentColor;
+    transform: scaleX(0); transform-origin: 0 50%; transition: transform .14s var(--in); }
+  .leafrow:hover .t::after, .leafrow:focus-visible .t::after { transform: scaleX(1); transition: transform .3s var(--out); }
+  .leafrow .name, .leafrow .num { transition: opacity .2s ease; }
+  .kids:has(.leafrow:hover) .leafrow:not(:hover) :is(.name, .num) { opacity: .45; }
+  .leafrow:active .t { transform: translateY(1px); }
+  .leafrow .chev { width: 12px; height: 12px; fill: none; stroke: currentColor; stroke-width: 1.5; align-self: center;
+    opacity: 0; transform: translateX(-4px); transition: opacity .14s var(--in), transform .14s var(--in); }
+  .leafrow:hover .chev, .leafrow:focus-visible .chev { opacity: 1; transform: none; transition: opacity .25s ease, transform .3s var(--out); }
+
+  /* accordion: names rise from a mask on open, sink on close */
+  .kwrap { display: grid; grid-template-rows: 0fr; transition: grid-template-rows .56s cubic-bezier(.45,0,.25,1); }
+  .kwrap.open { grid-template-rows: 1fr; transition: grid-template-rows .42s var(--out); }
+  .kids { min-height: 0; overflow: hidden; }
+  .kids > li:last-child { padding-bottom: 8px; }
+  .rise .t { animation: rise .42s var(--out) both; animation-delay: calc(var(--i) * 45ms + 60ms); }
+  .rise .num { animation: fade .3s ease both; animation-delay: calc(var(--i) * 45ms + 120ms); }
+  .sink .t { animation: sink .15s var(--in) both; animation-delay: calc(var(--r) * 28ms); }
+  @keyframes rise { from { transform: translateY(110%); } to { transform: none; } }
+  @keyframes sink { to { transform: translateY(110%); } }
+  @keyframes fade { from { opacity: 0; } }
+
+  /* ---------- detail: the giant leaf comes fully into frame ---------- */
+  /* detail uses the list's own layout: same leaf, the leaf's name takes the masthead, one short note in the list column */
+  .detail { position: relative; z-index: 1; display: none; height: 100%; mix-blend-mode: multiply; padding: 14px 22px 26px; }
+  .sleeve.detail-on .detail { display: grid; grid-template-rows: auto auto 1fr auto; }
+  .sleeve.detail-on .print { display: none; }
+  .back { justify-self: start; display: inline-flex; align-items: center; gap: 6px; border: 0; background: none; padding: 4px 0; color: inherit;
+    font: 400 14px/20px var(--ui); letter-spacing: .02em; opacity: .8; cursor: pointer; transition: opacity .2s ease; }
+  .back:hover { opacity: 1; }
+  .back .chev { width: 11px; height: 11px; fill: none; stroke: currentColor; stroke-width: 1.5; transform: rotate(180deg); transition: transform .3s var(--out); }
+  .back:hover .chev { transform: rotate(180deg) translateX(3px); }
+  .back:focus-visible { outline: 1.5px solid var(--ink); outline-offset: 2px; }
+  .d-name { margin: 6px 0 0; font-style: italic; font-weight: 400; font-size: 52px; line-height: 1.02; letter-spacing: -.015em; text-wrap: balance; max-width: 9ch; }
+  .d-fact { grid-row: 4; justify-self: end; width: 43%; margin: 0; font-size: 15px; line-height: 22px; text-wrap: pretty; }
+  .detail.show .d-name { animation: fade .4s ease both; }
+  .detail.show .d-fact { animation: fade .4s ease .12s both; }
+  .detail.show .back { animation: fade .3s ease both; }
+
+  @media (max-width: 520px) {
+    .big { font-size: 20px; line-height: 24px; }
+  }
+  /* during a gust, outgoing letters may leave their box, and the outgoing page stays on screen until they're gone */
+  .kwrap.gusting .kids { overflow: visible; }
+  .sleeve.detail-on .print.leaving, .sleeve .detail.leaving { display: grid; position: absolute; inset: 0; pointer-events: none; }
+  .sleeve .detail.leaving { grid-template-rows: auto auto 1fr auto; }
+
+  /* ---------- page chrome: same toolbar and spec sheet as the other weeks ---------- */
+  :root { --page: #f6f6f6; --c-card: #ffffff; --c-ink: #17181b; --c-muted: #62666d; --c-line: #dfe0e4; --c-press: #eeeef1;
+    --sans: "Geist", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; --mono-ui: "Geist Mono", ui-monospace, "SF Mono", Menlo, monospace; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --page: #0f1012; --c-card: #202226; --c-ink: #eeeff1; --c-muted: #9a9ea5; --c-line: #2a2c31; --c-press: #2c2f34; color-scheme: dark; } }
+  :root[data-theme="dark"] { --page: #0f1012; --c-card: #202226; --c-ink: #eeeff1; --c-muted: #9a9ea5; --c-line: #2a2c31; --c-press: #2c2f34; color-scheme: dark; }
+  body { display: block; padding: 0; }
+  .page { min-height: 100vh; min-height: 100dvh; display: flex; flex-direction: column; }
+  .stage { flex: 1; display: grid; grid-template-columns: minmax(0, 400px); justify-content: center; align-items: center; padding: 48px max(16px, env(safe-area-inset-left, 0px)) 32px; }
+  .controls { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 10px 8px; padding: 0 16px 28px; }
+  .btn { appearance: none; height: 42px; padding: 0 16px; border: 0; border-radius: 999px; background: var(--c-card); box-shadow: inset 0 0 0 1px var(--c-line);
+    color: var(--c-ink); font: 400 14px/1 var(--sans); cursor: pointer; }
+  .btn:hover { background: var(--c-press); }
+  .check { display: inline-flex; align-items: center; gap: 8px; }
+  .check input { width: 16px; height: 16px; margin: 0; accent-color: var(--c-ink); }
+  .btn:focus-visible, .check:focus-within { outline: 2px solid var(--c-ink); outline-offset: 3px; }
+  #spec-btn[aria-expanded="true"] { background: var(--c-ink); color: var(--page); box-shadow: none; }
+  .spec { position: fixed; left: 50%; bottom: 0; transform: translateX(-50%); z-index: 5; width: min(1040px, 100%); max-height: 64vh; overflow-y: auto;
+    padding: 20px 24px calc(24px + env(safe-area-inset-bottom, 0px)); border-radius: 20px 20px 0 0; background: var(--c-card); color: var(--c-ink); font-family: var(--sans);
+    box-shadow: 0 -12px 40px -12px rgba(26, 28, 36, 0.2), 0 0 0 1px var(--c-line); }
+  .spec[hidden] { display: none; }
+  .spec-head { display: flex; align-items: baseline; gap: 12px; margin-bottom: 16px; }
+  .spec-head h2 { margin: 0; font-size: 16px; line-height: 24px; font-weight: 600; }
+  .spec-head span { color: var(--c-muted); font: 12px/16px var(--mono-ui); }
+  .spec-close { margin-left: auto; appearance: none; border: 0; background: var(--c-press); color: var(--c-ink); font: 500 13px/20px var(--sans); padding: 6px 14px; border-radius: 999px; cursor: pointer; }
+  .spec-close:focus-visible { outline: 2px solid var(--c-ink); outline-offset: 2px; }
+  .spec-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px 32px; }
+  .spec-group h3 { margin: 0 0 8px; font: 500 11px/16px var(--mono-ui); letter-spacing: 0.08em; text-transform: uppercase; color: var(--c-muted); }
+  .spec-group dl { margin: 0; display: grid; grid-template-columns: auto 1fr; gap: 0 16px; }
+  .spec-group dt, .spec-group dd { margin: 0; padding: 6px 0; border-bottom: 1px solid var(--c-line); font-size: 13px; line-height: 18px; }
+  .spec-group dt { color: var(--c-muted); }
+  .spec-group dd { font-family: var(--mono-ui); font-size: 12px; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-variant-numeric: tabular-nums; }
+  .spec-group dd i { width: 12px; height: 12px; border-radius: 3px; flex: none; box-shadow: inset 0 0 0 1px var(--c-line); }
+  @media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; animation: none !important; } }
+</style>
+
+<div class="page">
+<div class="stage">
+<main class="sleeve" id="sleeve" data-side="red">
+  <div class="giant" id="giant"></div>
+  <div class="print" id="print"></div>
+  <div class="detail" id="detail"></div>
+</main>
+</div>
+  <div class="controls">
+    <label class="btn check" for="slow"><input type="checkbox" id="slow"> Slow motion</label>
+    <button class="btn" type="button" id="spec-btn" aria-expanded="false" aria-controls="spec">Spec</button>
+  </div>
+  <section class="spec" id="spec" aria-labelledby="spec-title" hidden>
+    <div class="spec-head"><h2 id="spec-title">Spec</h2><span>px at 1× · Autumn · Sleeve</span><button class="spec-close" type="button" id="spec-close" aria-label="Close spec">Close</button></div>
+    <div class="spec-grid"><div class="spec-group"><h3>Card</h3><dl><dt>Size</dt><dd>400 × 600 (2:3), max</dd><dt>Radius</dt><dd>12</dd><dt>Padding</dt><dd>22 22 18 (list) · 14 22 26 (detail)</dd><dt>Columns</dt><dd>50 % · 1fr, gap 8</dd><dt>Shadow</dt><dd>0 20 50 -24 · 45 %</dd><dt>Page</dt><dd><i style="background:#f6f6f6"></i>#F6F6F6</dd></dl></div><div class="spec-group"><h3>Masthead</h3><dl><dt>Text</dt><dd>“Autumn” · Newsreader Italic 60 / 60, −0.015em</dd><dt>Hover</dt><dd>each letter swings 6–10°, tint, 1.4 s</dd><dt>Motion</dt><dd>fades only; never gusts</dd></dl></div><div class="spec-group"><h3>Group row · expands</h3><dl><dt>Height</dt><dd>44 min, 6 between</dd><dt>Left slot</dt><dd>none</dd><dt>Line 1</dt><dd>Newsreader Italic 21 / 28</dd><dt>Right slot</dt><dd>icon 14: chevron › → minus when open</dd><dt>Enabled</dt><dd>chevron 42°</dd><dt>Hover</dt><dd>chevron 52°, +2 x · theme switches</dd><dt>Pressed</dt><dd>icon scale 0.8</dd><dt>Expanded</dt><dd>bars flatten to 12 wide</dd></dl></div><div class="spec-group"><h3>Leaf row · goes deeper</h3><dl><dt>Grid</dt><dd>26 · 1fr · 14, gap 10</dd><dt>Left slot</dt><dd>number, Newsreader 12 old-style tabular, 80 %</dd><dt>Line 1</dt><dd>Newsreader Regular 16 / 28, one line</dd><dt>Right slot</dt><dd>chevron 12, stroke 1.5, shows on hover</dd><dt>Hover</dt><dd>1 px rule draws in 0.3 s · others 45 % · giant leaf cuts to this one</dd><dt>Pressed</dt><dd>name 1 px down</dd><dt>Focus</dt><dd>1.5 outline, 2 offset</dd></dl></div><div class="spec-group"><h3>Detail</h3><dl><dt>Back</dt><dd>Newsreader 14 / 20, 80 % → 100 %, chevron 11 slides 3</dd><dt>Name</dt><dd>Newsreader Italic 52 / 1.02, max 9ch</dd><dt>Note</dt><dd>Newsreader 15 / 22, 43 % wide, bottom right</dd><dt>Exit</dt><dd>Back or Esc</dd></dl></div><div class="spec-group"><h3>Themes · Crimson</h3><dl><dt>Ground</dt><dd><i style="background:#E7DACB"></i>#E7DACB</dd><dt>Leaf</dt><dd><i style="background:#812903"></i>#812903</dd><dt>Text</dt><dd><i style="background:#391E03"></i>#391E03</dd><dt>Tints</dt><dd><i style="background:#A8461C"></i>#A8461C <i style="background:#812903"></i>#812903 <i style="background:#5A1C02"></i>#5A1C02</dd></dl></div><div class="spec-group"><h3>Themes · Golden</h3><dl><dt>Ground</dt><dd><i style="background:#E7DACB"></i>#E7DACB</dd><dt>Leaf</dt><dd><i style="background:#A5730D"></i>#A5730D</dd><dt>Text</dt><dd><i style="background:#391E03"></i>#391E03</dd><dt>Tints</dt><dd><i style="background:#A5730D"></i>#A5730D <i style="background:#7A5208"></i>#7A5208 <i style="background:#5A3B04"></i>#5A3B04</dd></dl></div><div class="spec-group"><h3>Themes · Bronze</h3><dl><dt>Ground</dt><dd><i style="background:#B8A173"></i>#B8A173</dd><dt>Leaf</dt><dd><i style="background:#605407"></i>#605407</dd><dt>Text</dt><dd><i style="background:#391E03"></i>#391E03</dd><dt>Tints</dt><dd><i style="background:#6B5E0A"></i>#6B5E0A <i style="background:#524806"></i>#524806 <i style="background:#3D3504"></i>#3D3504</dd></dl></div><div class="spec-group"><h3>Giant leaf</h3><dl><dt>Frame</dt><dd>x −10 %, y 12 %, 64 × 86 %</dd><dt>Swap</dt><dd>hard cut on hover, no scaling</dd><dt>Sway</dt><dd>spring k 14 · damping 2.2, bends from the stem</dd><dt>Range</dt><dd>~0.3° calm · ~2° in a gust</dd></dl></div><div class="spec-group"><h3>Wind</h3><dl><dt>Direction</dt><dd>random per visit, ±20° per gust</dd><dt>Breeze</dt><dd>every 3.8–6.2 s (detail 2.6–4.2), crosses card in 1.3 s</dd><dt>Lean</dt><dd>small text 9–15° · titles 3–5°</dd><dt>Riders</dt><dd>1–3 mid-word letters lift 9–15 px, 2.4–2.9 s</dd></dl></div><div class="spec-group"><h3>Flutter · hover</h3><dl><dt>Swing</dt><dd>14–22° small · 6–10° titles, damped</dd><dt>Duration</dt><dd>1.4 s, ease-out</dd><dt>Color</dt><dd>text → random theme tint → text</dd><dt>Direction</dt><dd>downwind first</dd></dl></div><div class="spec-group"><h3>Gusts · expand / page</h3><dl><dt>In</dt><dd>drift 12–30 px, ±40°, 0.8–1.15 s, rows +80 ms</dd><dt>Out</dt><dd>blow 30–90 px, spin 60–200°, 0.52–0.82 s</dd><dt>Hand-off</dt><dd>next page starts at 45 % of the gust</dd><dt>Guard</dt><dd>hover swap waits for letters to land; clicks queue</dd></dl></div><div class="spec-group"><h3>Flying letters</h3><dl><dt>Count</dt><dd>4 at a time, Newsreader Italic 15–28</dd><dt>Fall</dt><dd>80–130 px/s, glide 50–95, swing 2.4–3.6 rad/s</dd><dt>Landing</dt><dd>every 8–13 s on a matching letter; original blows away</dd><dt>Color</dt><dd>theme tint, fades into the text over 6 s</dd></dl></div><div class="spec-group"><h3>Accessibility</h3><dl><dt>Keyboard</dt><dd>Tab rows, Enter opens, Esc back</dd><dt>Focus</dt><dd>ripple through the name</dd><dt>Reduced motion</dt><dd>all wind and gusts off</dd></dl></div></div>
+  </section>
+</div>
+
+<script>
+/* slow motion scales every clock on the page */
+let SPEED = 1, vT = 0, vLast = performance.now();
+const clock = () => { const n = performance.now(); vT += (n - vLast) * SPEED; vLast = n; return vT; };
+const _setTimeout = window.setTimeout.bind(window);
+window.setTimeout = (fn, ms = 0, ...a) => _setTimeout(fn, ms / SPEED, ...a);
+const _animate = Element.prototype.animate;
+Element.prototype.animate = function (...a) { const an = _animate.apply(this, a); if (SPEED !== 1) an.playbackRate = SPEED; return an; };
+['transitionrun', 'animationstart'].forEach(t => document.addEventListener(t, e => { if (SPEED !== 1) e.target.getAnimations().forEach(a => a.playbackRate = SPEED); }, true));
+const P = {"maple": {"w": 743, "h": 1021, "d": "M360,0C363,0 367,1 370,5C373,9 376,19 380,24C384,29 383,32 392,37C401,43 424,49 432,57C440,66 438,79 441,88C444,97 448,106 451,109C454,112 456,111 461,108C466,105 478,93 483,90C488,87 491,90 493,92C495,95 495,99 495,105C495,111 491,117 491,126C491,135 494,149 494,157C494,165 491,165 491,173C491,181 493,194 493,205C493,216 490,231 490,239C490,247 493,247 494,252C495,257 493,266 494,270C495,274 496,276 498,276C500,277 503,275 506,273C509,271 511,270 514,265C517,260 517,253 525,241C534,229 557,203 565,195C573,187 569,194 571,195C573,196 574,196 576,199C578,203 579,212 581,216C583,220 586,223 590,224C594,225 598,224 603,222C608,220 611,213 622,213C633,213 661,219 671,220C682,221 679,222 685,220C691,218 701,211 705,209C710,207 710,208 712,209C714,210 716,211 717,213C718,216 720,218 717,224C714,231 704,245 700,252C696,260 696,261 695,269C694,277 693,294 695,302C697,310 703,313 705,317C707,321 710,319 706,324C702,329 687,341 682,348C677,355 674,361 674,364C674,367 675,369 680,368C686,367 701,361 707,360C713,359 714,362 715,364C716,366 716,369 715,372C714,375 715,376 709,382C703,388 689,398 681,407C673,416 674,423 663,435C652,447 623,472 615,481C607,490 613,486 614,488C615,490 614,492 620,492C626,493 640,490 649,491C658,492 662,490 676,498C691,507 725,533 736,542C747,551 743,549 743,553C743,557 744,558 737,564C730,570 709,581 700,589C691,597 691,605 681,612C671,619 648,625 642,633C636,641 644,654 643,660C642,666 640,666 638,667C636,668 640,670 630,668C620,666 589,657 577,655C565,653 568,654 560,655C552,657 535,662 529,664C523,666 525,660 525,668C525,677 526,705 527,715C528,725 530,717 531,729C532,741 531,777 531,788C532,800 534,795 534,798C534,801 531,806 529,807C527,809 524,808 522,807C520,806 518,806 515,801C513,797 512,788 507,780C502,773 494,762 487,756C480,750 474,751 464,744C454,737 434,718 427,713C420,708 424,712 421,712C418,713 414,716 411,716C408,716 406,721 402,714C398,708 390,684 385,677C381,670 377,670 375,670C373,670 372,670 371,675C370,681 372,695 371,703C370,711 368,711 367,724C366,737 368,768 367,780C366,792 364,769 363,794C362,819 362,893 363,929C364,965 368,997 367,1012C366,1027 362,1020 359,1021C356,1022 350,1020 347,1019C345,1018 345,1018 344,1013C344,981 343,860 344,827C345,794 347,835 348,813C349,791 350,717 349,697C348,677 346,695 342,695C339,696 335,695 328,700C321,705 307,719 298,726C289,733 286,736 275,740C265,744 243,749 235,750C227,751 231,749 229,744C227,739 225,734 224,722C223,710 228,687 223,674C218,661 204,647 196,643C188,640 182,651 175,653C168,655 162,656 154,655C146,654 133,653 127,649C121,645 122,636 117,632C112,628 113,626 99,624C85,622 46,623 35,621C24,619 33,615 33,612C33,609 32,611 36,605C40,599 52,587 59,576C66,565 67,552 76,540C85,529 106,514 113,507C120,500 117,503 116,499C115,495 116,492 108,485C100,478 80,465 69,455C58,445 53,432 42,424C32,416 13,411 6,407C-1,403 1,403 0,401C-1,399 -1,397 0,395C1,393 1,392 4,391C8,391 11,393 21,392C31,391 54,386 62,384C70,382 69,381 71,379C74,377 76,373 77,370C78,367 77,363 76,359C75,356 73,352 71,349C69,346 67,344 63,341C59,339 50,336 46,334C42,332 43,337 40,327C38,317 36,290 31,275C26,260 13,246 10,238C7,230 9,231 11,229C13,227 15,226 23,227C31,228 47,235 58,236C70,237 83,234 92,235C101,236 104,242 110,243C116,245 123,245 127,244C131,244 131,244 134,240C137,236 141,225 145,222C149,219 148,214 156,220C164,226 185,250 194,258C203,266 206,264 211,268C217,272 223,281 227,283C231,286 233,289 236,283C240,277 246,261 248,248C250,235 247,216 248,205C249,195 254,193 254,185C254,178 249,173 248,160C247,148 248,119 249,110C250,101 252,106 254,105C256,104 258,104 261,105C264,107 269,110 274,114C279,118 285,128 289,131C293,134 294,135 298,132C302,129 309,123 311,114C314,105 309,86 313,77C317,68 328,73 335,61C342,49 350,17 354,7C358,-3 357,0 360,0Z"}, "sweetgum": {"w": 509, "h": 770, "d": "M289,0C294,-6 295,-2 295,1C295,4 289,8 289,17C289,26 289,38 294,55C299,72 315,104 321,121C327,138 327,148 328,158C329,168 327,173 328,180C329,187 332,187 335,199C338,211 342,245 345,254C348,264 347,258 351,256C355,254 356,247 371,240C386,233 422,221 441,216C460,211 476,209 487,212C498,215 509,224 509,234C509,244 499,258 487,274C476,290 456,315 440,329C425,344 401,355 394,361C387,367 392,363 396,366C401,369 411,371 421,377C431,383 442,392 454,402C466,412 485,428 491,435C497,442 497,442 490,443C484,444 465,439 452,439C439,439 422,441 412,443C403,445 404,452 395,450C386,448 367,435 357,432C347,429 340,434 333,431C326,429 319,419 314,417C309,415 304,402 304,419C304,436 313,475 316,519C319,563 318,642 320,681C322,720 326,738 327,753C328,768 326,766 324,769C322,772 319,771 317,770C315,769 312,774 311,764C310,754 311,752 310,708C309,664 308,545 306,502C304,460 303,468 299,453C295,438 288,419 284,410C280,401 277,403 274,401C271,400 269,398 265,401C261,404 254,414 248,418C242,422 242,418 231,424C220,431 192,451 182,457C173,463 178,459 174,458C170,457 166,452 160,450C154,449 147,449 139,449C131,449 122,448 112,449C102,450 86,454 78,455C71,456 70,454 67,453C64,452 62,450 62,448C62,446 62,443 65,440C68,437 75,438 82,432C89,426 101,410 108,404C115,398 118,401 122,397C127,393 130,383 135,379C140,375 150,374 154,372C158,370 161,369 159,365C157,361 150,354 142,348C134,343 122,340 111,332C100,324 93,321 78,302C63,284 35,238 22,221C9,204 2,205 0,201C-2,197 3,195 8,196C13,197 9,201 31,207C53,213 115,224 142,231C169,238 180,246 191,250C203,254 207,253 211,253C215,253 214,255 214,248C214,241 211,226 212,211C213,196 218,173 219,158C220,143 212,141 219,121C226,101 251,57 263,37C275,17 284,6 289,0Z"}, "sassafras": {"w": 892, "h": 746, "d": "M474,0C481,-2 486,-1 491,1C496,3 492,-2 505,10C518,23 552,57 569,76C586,96 594,100 605,127C616,154 631,197 636,239C642,282 636,351 638,382C640,413 644,416 647,427C651,438 653,441 659,448C665,455 676,464 684,470C692,476 696,479 709,484C722,489 747,498 762,501C777,504 779,503 799,501C819,499 867,489 882,487C897,485 888,486 890,487C892,488 905,491 892,495C879,499 830,509 810,511C791,514 784,508 775,510C766,512 774,515 758,521C742,527 711,532 681,547C651,562 606,590 580,610C554,630 544,651 527,666C510,681 498,691 479,701C461,711 446,719 416,726C387,734 326,743 302,746C278,749 287,747 272,744C257,741 224,733 210,730C197,727 195,727 191,724C187,721 190,714 188,710C186,706 186,703 181,701C176,700 160,704 156,701C152,698 155,690 157,682C159,674 164,663 170,652C176,641 187,626 194,617C201,608 201,609 214,600C227,592 253,574 273,566C293,558 318,557 336,551C354,546 370,540 381,533C392,527 397,520 400,512C403,504 402,492 400,486C398,480 394,478 389,474C385,471 380,468 373,465C367,463 362,460 350,459C339,458 315,459 304,458C293,457 299,460 285,454C271,448 248,434 220,424C192,414 139,402 117,394C95,386 99,387 87,378C75,369 56,352 46,341C36,330 33,328 26,310C19,292 7,251 3,235C-1,219 0,222 0,213C0,204 -2,190 2,183C6,176 11,176 23,173C35,171 56,172 73,168C90,164 110,154 126,151C142,148 159,149 171,150C183,151 181,150 197,158C213,166 244,182 265,197C287,212 309,231 326,246C343,262 352,272 367,290C382,308 405,342 415,354C426,366 424,359 430,360C436,361 445,363 451,360C457,357 462,347 465,341C468,335 476,348 468,325C460,302 426,227 417,201C408,175 413,184 412,171C411,158 410,139 411,123C412,107 416,86 419,74C422,62 424,60 429,50C434,40 443,24 450,16C458,8 467,3 474,0Z"}, "ginkgo": {"w": 792, "h": 992, "d": "M347,0C362,-2 362,-2 375,0C388,2 404,12 425,14C446,16 484,13 499,14C514,15 508,16 515,20C522,24 531,33 540,37C549,41 562,42 569,44C576,47 578,51 584,52C591,54 599,51 608,53C617,55 629,59 638,65C648,71 659,84 665,91C671,98 665,101 672,109C679,117 701,130 709,140C717,150 713,157 721,169C729,181 749,199 757,210C765,221 765,227 767,235C769,243 766,245 770,256C774,267 788,290 792,299C796,308 794,306 792,312C791,318 790,329 783,335C776,342 767,347 751,351C735,355 716,358 688,361C660,364 607,367 581,371C555,375 550,376 533,383C516,391 493,407 480,416C467,425 463,430 456,439C449,448 441,457 436,468C431,479 429,493 427,503C425,514 424,507 425,531C427,555 429,595 436,646C443,698 458,791 467,840C476,889 485,918 492,941C499,964 506,972 507,980C509,988 504,986 501,988C498,990 493,994 489,992C485,990 480,986 477,977C474,968 476,957 473,940C470,924 464,910 457,878C450,846 442,804 433,749C425,694 414,592 406,550C399,508 394,510 388,495C382,480 380,475 369,461C358,447 340,425 321,410C302,395 277,378 257,369C237,360 219,358 201,354C183,350 166,348 150,347C135,346 126,348 108,346C90,344 57,338 41,334C25,330 21,327 14,321C7,315 2,306 0,299C-2,292 -7,300 2,280C11,261 41,204 56,182C71,160 82,157 90,147C98,137 93,134 102,124C111,114 129,97 142,87C155,78 169,74 179,67C190,60 195,49 205,45C215,41 228,48 237,45C246,42 251,33 259,27C268,22 273,17 288,12C303,8 333,2 347,0Z"}, "birch": {"w": 444, "h": 860, "d": "M294,0C296,-1 298,-4 299,2C300,8 300,29 299,37C298,45 291,46 293,49C295,52 307,52 311,54C315,56 315,53 317,61C319,69 319,94 321,103C323,112 326,112 328,117C330,123 329,131 331,136C333,141 337,141 338,146C340,151 339,161 340,167C342,173 344,177 347,181C350,185 356,186 358,189C360,193 356,198 358,202C360,206 366,207 370,212C374,217 378,225 380,230C382,235 380,238 382,243C384,248 390,251 393,260C396,269 399,287 400,298C401,309 396,321 397,328C399,335 404,336 409,339C414,342 422,341 425,346C428,351 429,362 428,371C427,380 418,393 418,399C418,405 427,404 429,407C431,411 426,416 428,420C430,424 439,419 439,433C440,448 432,493 431,507C430,521 435,512 435,518C436,524 433,539 434,545C436,551 442,552 444,555C446,558 444,558 444,563C444,568 445,576 442,583C439,590 431,598 428,605C425,612 429,616 424,625C419,634 404,650 400,657C396,664 406,659 398,669C390,679 361,703 352,715C343,727 350,730 343,739C336,748 321,757 310,770C300,784 289,808 280,820C271,832 263,837 258,843C253,849 253,853 251,856C249,859 249,860 245,860C241,860 234,860 226,857C219,854 214,853 200,842C186,831 161,808 142,793C123,778 99,769 84,754C69,739 56,713 50,702C44,691 51,696 47,689C44,682 34,669 29,658C24,647 20,639 18,624C16,609 21,580 19,567C17,554 9,551 8,544C7,537 12,537 11,526C10,515 0,493 0,480C0,467 8,453 11,446C14,439 16,443 17,438C18,433 14,420 15,414C16,408 22,406 23,401C24,396 19,392 22,382C25,372 36,351 42,342C48,333 53,335 56,329C59,323 58,310 60,305C62,300 68,302 70,298C72,294 72,288 74,283C76,278 77,275 84,269C91,263 108,254 115,245C123,236 121,227 129,217C137,207 151,197 161,184C171,171 184,146 191,137C198,128 194,140 202,132C210,124 227,105 240,89C253,73 271,48 278,35C286,22 282,17 285,11C288,5 292,2 294,0Z"}, "aspen": {"w": 834, "h": 839, "d": "M637,0C640,-1 639,0 640,2C641,4 640,10 641,13C642,16 638,14 645,21C652,28 674,47 681,55C688,63 687,68 689,71C691,75 694,73 695,76C696,79 695,84 696,87C697,91 701,94 702,97C703,101 700,105 701,108C702,111 705,113 706,116C707,119 705,122 706,124C707,127 712,128 713,131C714,134 711,138 712,143C713,148 717,157 718,163C719,169 717,175 717,179C717,183 719,184 719,186C719,188 717,191 717,193C718,196 722,198 722,201C723,204 720,206 720,209C720,213 722,219 722,222C722,225 720,223 720,226C720,229 722,235 721,239C720,243 717,245 715,251C713,257 715,265 711,274C707,283 697,299 689,306C681,313 671,315 664,317C657,319 652,318 647,319C643,321 641,324 637,326C633,328 629,330 622,331C616,332 604,331 598,330C592,329 592,329 586,326C580,323 567,314 562,312C558,310 562,310 559,313C556,317 552,326 546,333C540,340 538,344 522,355C507,366 471,388 453,401C435,414 421,426 412,434C404,443 406,443 402,452C398,461 393,477 390,488C387,499 384,508 382,517C380,526 379,536 379,540C379,544 378,544 383,543C388,542 403,536 408,533C413,531 411,529 412,528C414,528 404,534 417,530C430,526 472,509 490,503C509,497 521,497 528,495C535,493 532,493 533,492C534,491 536,491 535,487C535,483 531,475 530,467C530,459 530,449 532,441C535,433 542,422 545,417C548,412 549,412 552,410C555,408 557,410 561,406C565,402 571,391 575,387C579,383 578,387 583,384C588,381 598,370 603,367C608,364 608,368 611,367C614,366 619,362 623,361C627,360 629,363 633,363C637,363 642,361 645,361C648,361 648,363 649,363C651,363 652,361 654,360C656,360 659,359 661,360C663,361 663,364 667,366C671,368 680,368 684,370C688,372 689,376 691,377C693,378 696,377 698,378C700,379 700,381 703,383C706,385 714,386 717,388C720,390 721,395 723,397C725,399 729,398 731,399C733,400 733,404 735,405C738,407 744,407 746,408C748,410 747,412 749,414C751,416 754,416 758,419C762,422 770,431 773,434C776,437 773,437 774,439C775,441 780,443 781,445C782,447 780,447 782,449C784,451 790,454 792,457C794,460 793,463 794,465C795,468 799,469 800,472C801,475 799,478 801,481C803,484 809,489 810,492C812,495 809,497 810,501C811,505 816,511 817,515C818,519 816,521 817,524C818,528 822,531 823,536C824,541 822,552 822,556C822,560 825,560 825,562C825,564 823,563 824,567C826,571 833,581 834,584C836,587 836,585 833,586C830,587 819,590 814,592C809,594 807,595 802,599C797,603 789,614 785,618C781,622 780,620 778,622C776,624 777,626 775,628C773,630 767,633 764,635C761,638 761,641 759,643C757,645 753,644 750,646C747,648 745,652 742,654C739,656 734,655 730,656C727,657 724,660 721,661C718,662 714,660 711,661C708,662 709,664 704,665C699,666 685,667 680,668C675,669 678,671 676,672C674,673 671,671 669,672C667,673 666,676 663,676C660,677 657,675 651,675C645,676 630,679 625,679C620,679 625,677 620,676C615,675 602,677 595,675C589,673 585,667 581,665C577,664 578,668 573,666C569,664 558,654 554,651C550,648 549,651 547,649C545,647 542,645 540,641C538,637 534,630 533,625C532,620 533,614 532,611C531,608 529,609 528,605C527,601 529,593 527,585C526,577 520,565 519,555C518,546 521,536 523,528C525,520 532,512 533,507C534,503 533,502 530,501C527,500 527,499 514,503C501,507 477,516 454,524C432,533 393,547 379,554C365,561 374,558 372,564C370,571 370,584 365,593C361,602 350,613 345,620C341,627 339,636 338,637C337,638 340,627 339,624C338,621 335,620 334,617C333,615 332,613 334,609C336,605 342,596 344,592C346,588 346,585 346,583C346,581 344,580 344,579C344,578 347,579 348,576C349,573 353,564 352,560C351,556 348,555 344,554C340,553 335,553 329,554C323,555 315,557 309,559C303,561 299,563 295,567C291,571 288,572 283,581C279,590 270,615 268,622C266,629 266,624 271,625C276,627 289,627 296,631C303,635 310,643 314,647C318,652 318,653 320,658C322,663 322,672 325,677C328,683 335,687 337,691C339,695 337,698 338,701C339,704 342,704 342,707C342,710 340,713 339,717C339,721 340,727 339,730C338,733 336,732 335,736C334,740 334,748 332,752C330,756 326,757 325,759C324,761 325,764 324,766C323,768 320,769 319,771C318,773 319,776 316,779C313,782 305,785 302,788C299,791 302,792 296,796C290,800 272,809 266,812C260,815 261,811 259,812C257,813 258,814 253,816C248,818 244,823 227,824C210,825 166,823 151,824C137,825 143,827 140,829C137,832 134,838 132,839C130,840 129,837 127,833C125,829 125,820 122,815C119,810 112,806 109,802C106,798 108,795 106,790C104,785 98,778 96,774C94,770 97,770 96,768C95,766 93,766 91,760C89,755 86,744 85,735C84,726 85,710 85,705C85,700 83,705 83,703C83,701 85,695 85,692C85,689 82,689 82,685C82,682 86,675 87,671C88,667 85,666 86,662C87,658 92,650 93,646C94,642 91,644 92,640C93,636 96,628 101,622C106,616 115,607 121,603C127,599 132,599 136,597C140,595 139,593 143,591C147,590 150,588 160,588C170,588 196,589 205,590C214,591 207,593 214,595C221,597 237,599 245,603C253,607 258,617 261,619C265,621 264,618 266,614C268,610 269,604 272,597C275,590 279,578 284,572C289,566 295,562 300,559C306,556 311,554 317,552C324,550 334,548 339,547C344,546 346,547 349,548C352,549 354,552 355,552C357,552 356,556 358,550C360,545 366,527 368,519C370,511 370,508 369,502C368,496 365,489 361,483C357,477 351,470 346,465C342,461 340,459 334,456C328,453 314,448 308,446C302,444 303,445 296,446C289,448 276,453 268,455C260,457 254,453 249,457C245,461 244,475 241,480C239,486 237,485 234,490C231,495 229,505 225,511C221,517 215,523 211,526C207,529 204,527 200,530C196,533 190,543 186,546C183,549 182,549 179,550C177,551 174,549 171,550C168,551 166,555 163,555C160,556 157,553 153,553C149,553 142,555 139,555C136,555 137,553 134,552C132,552 126,553 124,552C122,551 123,550 120,548C117,547 108,545 104,543C100,541 100,538 98,536C96,535 94,536 92,534C90,532 89,528 86,526C83,524 77,522 74,520C72,518 73,516 71,514C69,512 65,511 63,509C61,507 60,503 58,502C57,501 58,505 54,501C50,497 42,489 36,480C30,471 22,452 19,445C16,438 17,444 16,436C15,429 16,410 13,400C11,390 3,383 1,378C-1,373 -2,375 0,372C2,370 8,370 15,363C22,356 37,338 44,331C52,324 56,325 60,322C64,319 63,317 66,315C69,313 76,310 80,309C84,308 86,309 89,309C92,309 96,308 98,307C100,306 100,304 103,303C106,302 112,303 114,303C116,303 106,302 116,301C126,300 162,299 172,299C182,299 174,301 176,301C178,301 180,299 183,300C186,301 191,305 194,306C197,307 199,305 201,305C203,306 204,308 207,309C210,310 213,309 217,310C221,311 224,311 229,314C234,317 241,324 245,328C249,333 249,338 251,341C253,344 258,342 259,346C261,350 259,357 260,364C261,371 266,382 267,390C268,398 269,406 268,412C267,419 265,423 262,429C259,435 252,443 252,447C252,451 254,453 260,452C266,451 282,445 290,443C298,441 300,441 306,442C313,443 321,444 329,448C337,452 346,457 354,464C362,471 371,487 375,490C379,493 376,491 379,484C382,477 387,463 391,447C395,431 401,401 403,386C405,371 406,366 405,356C404,346 401,337 396,328C391,319 383,308 377,300C372,293 367,287 363,283C360,279 365,290 356,278C347,266 318,223 308,209C298,196 299,198 296,197C293,196 292,196 288,202C284,209 278,227 273,236C268,245 264,249 260,254C256,259 252,263 248,265C244,268 240,267 237,269C234,271 232,276 228,278C225,280 224,282 216,283C208,284 194,285 182,283C171,281 157,278 147,272C137,266 126,252 121,247C116,242 121,245 119,242C117,240 110,235 108,232C106,230 109,229 107,227C105,225 98,221 96,218C94,216 98,217 96,212C94,208 85,196 83,191C81,186 84,186 83,184C82,182 80,181 79,179C78,178 80,177 79,175C78,173 74,170 73,168C72,166 75,167 73,163C71,159 65,151 61,142C58,133 54,118 52,108C50,98 51,90 49,82C47,74 39,63 40,59C41,55 49,59 53,58C57,57 60,57 64,54C68,52 75,47 78,43C82,40 82,35 85,33C88,31 92,31 94,30C96,29 94,27 97,25C100,23 110,20 114,18C118,16 117,13 122,12C127,11 139,11 143,10C147,9 139,9 145,8C151,8 171,8 177,7C183,7 170,5 179,5C188,5 220,6 229,7C238,8 233,11 235,11C237,12 239,9 242,10C245,11 249,14 251,15C254,16 254,13 257,14C260,15 266,19 270,20C274,21 276,18 279,19C282,20 287,25 290,27C293,29 294,26 297,29C300,32 306,43 310,47C314,51 316,49 319,54C322,59 326,70 328,75C330,80 329,79 329,84C329,89 326,99 326,104C327,109 331,110 332,112C333,114 333,114 333,118C333,122 333,130 332,136C331,142 332,144 326,153C320,162 302,183 297,190C293,197 298,192 299,193C300,194 304,193 305,194C306,195 304,197 306,200C308,203 311,203 316,211C322,219 328,231 339,246C351,261 375,287 385,299C395,311 396,315 399,319C402,323 403,325 405,323C407,321 409,313 412,308C415,303 423,296 425,294C428,292 427,292 427,294C427,296 425,303 426,305C427,307 428,309 431,304C434,299 441,283 443,274C445,265 442,256 443,250C444,244 448,244 448,239C448,234 445,227 445,219C445,212 456,201 449,194C442,187 415,185 403,178C391,171 383,160 377,154C371,148 371,147 369,141C367,136 364,128 363,121C363,115 365,107 366,102C367,97 368,94 370,89C373,84 376,77 381,71C386,65 394,56 400,52C406,48 412,47 418,46C425,45 434,47 439,45C444,43 446,36 450,35C454,34 459,40 462,41C465,42 467,42 470,41C473,40 473,36 479,35C485,34 498,33 506,33C515,34 524,36 530,38C536,40 539,46 544,45C549,44 558,33 562,31C566,29 567,32 570,31C574,30 580,28 583,26C586,24 588,21 590,20C593,19 596,20 598,19C600,18 600,16 604,14C608,13 619,12 624,10C630,8 634,1 637,0Z"}, "tulip": {"w": 804, "h": 874, "d": "M235,0C242,-5 263,20 274,25C285,30 294,29 302,32C310,36 319,44 324,46C329,48 330,42 332,44C335,46 324,45 339,56C354,67 385,113 421,112C457,111 519,63 554,49C589,36 621,25 632,31C643,37 622,68 622,85C622,102 632,119 634,134C636,149 632,164 633,173C634,182 640,185 640,189C640,193 634,192 633,198C632,204 632,219 632,225C632,231 635,230 635,233C635,236 632,238 633,242C634,246 636,253 640,259C644,265 652,274 657,278C662,282 662,281 669,283C676,285 685,284 701,288C718,292 751,305 768,308C785,311 799,304 804,306C809,308 804,311 798,318C792,325 773,337 766,347C759,357 758,371 754,378C750,386 741,386 740,392C739,398 749,409 749,413C749,417 740,416 739,415C738,414 741,410 741,408C741,406 740,405 738,405C736,405 732,407 731,409C730,411 731,414 732,415C733,417 737,415 738,418C739,422 740,432 739,436C738,440 732,439 731,442C730,445 734,450 732,453C731,456 727,452 722,459C717,466 703,487 700,494C698,501 706,497 707,499C708,501 709,504 707,504C706,504 702,494 698,497C694,500 691,515 684,524C677,533 664,548 658,553C652,558 654,550 647,553C640,556 624,569 617,572C610,575 608,570 605,570C602,570 614,575 597,574C580,573 525,568 505,565C485,562 486,557 478,556C470,555 464,556 459,557C455,558 454,564 451,564C449,564 448,558 444,557C440,556 435,559 429,559C424,559 415,553 411,555C407,557 405,557 406,573C408,590 416,635 420,654C424,673 424,673 429,685C434,698 437,706 450,729C463,752 496,803 509,822C522,841 520,836 527,842C534,848 544,852 549,856C554,860 556,863 557,866C558,869 558,873 555,874C552,875 547,879 540,874C533,869 530,872 512,846C494,820 450,750 433,719C416,688 417,684 412,661C407,638 404,598 401,583C398,568 398,572 396,569C394,566 391,567 390,565C390,563 391,560 393,559C395,558 401,561 402,560C403,559 402,552 400,551C398,551 391,554 388,557C385,560 383,566 380,567C377,569 372,569 369,566C366,563 366,550 362,549C358,548 354,559 346,561C338,563 320,561 313,562C307,563 316,565 307,566C299,567 277,570 262,570C247,571 232,572 216,569C200,566 184,562 167,551C150,540 125,515 113,503C101,492 105,504 97,482C89,461 76,398 66,374C56,350 46,345 35,336C24,328 3,327 0,323C-3,319 6,315 19,311C32,307 62,302 76,297C91,293 93,287 106,284C119,281 146,280 156,278C167,276 164,274 169,270C174,266 180,259 184,253C188,248 189,247 191,237C194,227 197,212 199,193C201,174 201,142 204,124C207,106 213,94 217,83C222,72 228,72 231,58C234,44 228,6 235,0Z"}, "beech": {"w": 608, "h": 381, "d": "M245,0C266,-1 304,3 332,8C360,13 394,21 411,28C429,35 419,39 437,48C455,57 496,71 518,82C540,93 554,108 567,116C580,124 591,124 598,128C605,132 607,135 608,139C609,143 607,146 604,150C601,154 598,152 588,165C578,178 568,203 544,230C520,258 464,312 445,330C426,348 434,336 429,337C424,338 421,339 413,337C405,335 392,326 382,324C372,322 357,321 352,323C347,325 347,331 352,335C357,340 377,346 381,350C385,354 380,357 377,359C374,361 376,365 365,363C355,361 323,349 314,347C305,346 309,350 309,354C309,358 317,367 315,371C313,376 304,380 296,381C288,383 280,382 268,380C256,378 253,378 226,368C199,358 134,334 106,321C78,308 71,299 59,288C47,277 40,261 34,254C28,247 28,249 23,248C18,247 10,248 6,247C2,246 -5,255 0,240C5,225 22,184 35,158C49,133 67,103 81,87C95,71 105,74 118,63C131,53 143,32 158,24C173,16 193,18 207,14C222,10 224,1 245,0Z"}, "oak": {"w": 514, "h": 983, "d": "M215,0C218,-2 220,-2 223,1C226,4 229,15 233,18C237,21 244,13 247,18C251,23 252,44 254,49C256,54 256,52 259,49C263,46 270,35 275,31C280,27 285,27 289,27C293,27 295,28 299,31C303,35 309,38 311,48C313,58 311,81 312,89C313,97 316,95 318,96C320,97 319,98 326,94C333,90 354,74 362,70C370,66 370,68 374,69C378,70 381,72 384,76C387,80 389,84 391,92C393,100 394,115 394,124C394,133 392,135 389,144C386,153 377,171 374,178C371,185 373,183 373,185C374,187 375,189 377,190C379,191 381,193 387,189C393,185 407,171 415,165C423,159 428,157 435,155C442,153 450,153 455,155C460,157 464,160 466,166C469,172 470,183 470,192C471,201 468,213 469,219C470,225 473,226 476,229C479,232 486,234 488,237C490,241 488,245 486,250C484,255 485,256 477,265C469,274 449,291 437,305C425,319 412,333 403,347C394,361 385,380 381,389C378,398 381,399 382,402C383,405 386,406 388,407C390,408 386,410 396,406C406,402 435,388 446,383C457,378 455,379 464,378C473,377 490,377 498,378C506,379 508,381 511,383C514,385 514,383 514,388C514,393 514,403 512,411C510,419 504,433 502,438C500,444 500,440 502,444C504,448 513,456 513,463C513,470 510,475 501,485C492,495 474,514 461,525C448,536 434,543 425,550C416,558 416,557 405,570C394,583 369,611 357,627C346,643 340,657 336,668C332,679 333,688 333,694C333,700 335,701 337,703C339,705 338,707 343,707C348,707 359,705 366,705C373,705 378,707 383,709C388,711 394,714 396,718C398,722 397,727 397,731C397,735 398,735 394,742C390,749 381,767 375,775C369,784 365,788 359,793C353,798 344,797 338,803C332,810 326,824 324,832C322,840 321,848 326,853C331,858 348,858 353,862C358,866 356,870 355,875C354,881 353,886 349,895C345,904 334,920 330,929C326,938 329,941 327,949C325,957 319,973 316,979C314,985 314,982 312,983C310,984 312,983 302,983C292,983 260,984 251,983C242,982 251,991 246,979C241,967 224,926 219,911C214,897 220,903 215,892C211,881 199,857 192,846C185,835 177,831 174,825C171,819 176,819 174,812C172,805 163,791 161,785C159,779 160,779 161,776C162,774 158,771 165,770C172,769 196,772 203,771C210,771 207,769 208,767C209,765 210,765 207,758C204,752 195,735 190,728C186,721 185,722 180,718C175,714 166,706 160,702C154,698 154,701 144,695C134,689 113,677 102,667C91,657 82,644 76,634C70,624 69,612 68,605C67,598 67,596 69,593C71,590 72,590 78,588C84,586 94,584 106,583C118,583 142,585 150,585C158,585 153,583 154,581C155,579 155,580 154,575C153,570 152,559 147,551C142,543 139,539 126,529C113,519 83,497 70,489C58,481 57,484 51,480C46,476 41,471 37,467C33,463 30,460 28,456C26,452 28,449 26,444C24,440 19,436 15,429C11,422 6,408 4,402C2,396 2,395 5,392C8,389 16,385 21,382C26,380 27,378 35,377C43,376 65,376 71,375C78,374 80,379 74,372C68,365 45,347 34,331C23,315 12,288 6,276C0,264 1,262 0,257C-1,252 -1,250 0,247C1,245 -7,242 6,242C19,243 66,249 79,250C92,251 85,250 86,248C87,246 89,248 83,237C77,226 56,192 51,180C46,168 55,172 53,165C52,158 44,147 42,139C41,131 43,123 44,119C45,115 46,116 50,115C54,115 61,113 70,116C80,119 100,131 107,134C115,137 113,137 115,134C117,131 120,128 119,118C118,108 110,86 109,75C108,64 109,57 111,52C113,47 113,45 122,47C131,49 159,61 167,63C176,65 172,63 173,58C174,53 173,40 174,33C175,27 177,23 179,19C182,16 185,13 189,12C193,11 201,16 205,14C209,12 212,2 215,0Z"}, "chestnut": {"w": 321, "h": 890, "d": "M244,0C246,-1 252,6 254,12C256,18 254,30 256,35C258,40 265,35 267,40C269,45 265,62 266,67C267,72 269,72 271,72C273,72 278,66 280,65C282,64 283,62 283,68C283,74 279,93 279,100C279,107 281,108 283,108C285,108 289,101 291,101C293,101 294,100 294,107C294,114 290,135 290,142C291,149 294,150 297,150C300,151 304,146 306,145C308,145 309,140 309,147C309,155 303,182 304,190C305,199 312,196 314,198C316,200 315,196 314,202C313,208 307,229 307,236C307,243 310,241 312,242C314,243 320,237 320,244C320,251 313,276 312,284C311,292 311,290 312,293C313,296 319,298 320,300C321,302 322,298 320,305C319,312 312,334 311,340C310,347 313,343 315,344C317,345 320,344 321,344C322,345 323,342 321,347C319,352 311,369 309,375C307,381 308,381 309,384C310,387 318,385 317,392C316,399 304,417 302,425C300,433 308,433 306,439C305,445 295,455 293,461C291,467 296,470 295,476C295,482 290,492 290,497C290,502 297,499 296,504C295,510 287,525 285,530C283,535 284,534 285,535C286,537 291,538 292,539C293,541 295,537 292,544C289,552 274,576 272,584C270,592 279,589 280,591C281,593 284,590 280,595C276,601 261,618 257,624C253,630 256,630 257,631C258,633 263,632 264,633C265,634 268,632 262,638C257,645 236,665 231,672C226,679 232,679 233,681C234,683 237,681 238,682C239,683 242,680 238,685C234,690 218,707 214,714C210,721 219,720 216,727C213,734 205,748 198,756C191,764 179,774 174,777C169,781 173,779 170,777C167,775 161,766 158,763C155,761 151,763 151,762C151,761 157,761 160,759C163,757 170,750 170,748C170,746 162,749 159,748C156,747 148,745 151,742C154,740 174,736 179,733C185,730 186,727 184,725C182,723 170,724 165,722C161,720 160,715 157,714C154,714 152,716 149,719C147,722 143,727 142,731C141,735 144,740 144,745C144,750 140,758 140,761C140,764 145,762 146,764C147,766 143,771 144,775C145,779 151,786 150,790C150,794 140,786 141,797C142,808 153,841 157,855C161,869 164,879 164,883C164,888 161,881 159,882C158,883 157,893 155,890C153,887 149,880 145,865C141,851 137,814 133,803C130,792 131,800 124,799C118,799 102,802 94,800C86,799 83,797 75,790C68,784 57,772 49,761C41,750 31,732 27,726C23,720 26,723 27,723C28,723 33,725 35,724C37,724 38,723 37,720C36,717 33,710 30,705C27,701 21,698 19,693C18,689 23,686 21,678C19,670 8,652 6,646C5,640 11,642 12,640C13,638 15,640 13,633C11,627 2,607 0,601C-2,595 -1,598 0,597C1,596 4,597 6,596C8,595 11,598 10,591C9,584 0,559 0,552C0,545 6,551 8,549C10,547 14,552 13,542C12,532 3,497 2,488C1,479 3,486 5,486C7,486 11,490 13,489C15,488 18,491 18,482C18,473 14,441 15,433C16,425 23,433 25,432C27,431 29,433 29,426C29,419 25,395 27,388C29,381 37,389 39,383C41,377 38,359 39,354C40,349 44,353 46,352C48,351 50,354 51,346C52,338 52,310 53,302C55,295 58,302 60,301C62,300 64,299 65,296C67,293 68,292 69,285C70,278 67,262 69,256C71,250 78,257 81,249C84,241 85,215 86,208C87,201 86,206 88,206C91,206 98,210 101,210C104,210 104,210 106,207C108,204 110,200 111,193C112,186 110,171 110,166C110,161 110,164 113,164C116,164 126,168 129,168C132,168 130,174 132,165C134,156 138,125 140,116C142,108 141,113 143,114C145,115 148,123 151,124C154,125 159,126 162,120C165,114 168,94 170,89C172,85 173,93 175,93C177,94 178,94 180,92C182,90 186,84 188,79C190,75 189,67 191,65C193,63 195,69 199,65C203,61 211,45 215,41C219,37 222,43 224,43C226,43 226,44 228,40C230,37 232,25 234,22C236,19 239,24 240,23C242,23 242,23 243,19C244,15 242,1 244,0Z"}};
+const LEAVES = {
+  maple:     { name: 'Sugar Maple', latin: 'Acer saccharum', when: 'Oct', from: 'Carotenoids, anthocyanins', note: 'Orange, red and yellow on one crown', found: 'Northeastern North America' , fact: 'Its sap is boiled down into maple syrup. It takes about 40 liters of sap to make one liter.' },
+  sweetgum:  { name: 'Sweetgum', latin: 'Liquidambar styraciflua', when: 'Nov', from: 'Anthocyanins', note: 'Red, purple and yellow at once', found: 'Southeastern United States' , fact: 'Named for the fragrant resin in its bark. Its spiky seed pods are known as gumballs.' },
+  sassafras: { name: 'Sassafras', latin: 'Sassafras albidum', when: 'Oct', from: 'Anthocyanins, carotenoids', note: 'Three leaf shapes on one tree', found: 'Eastern North America' , fact: 'One tree grows three leaf shapes: oval, mitten and three-lobed. Crushed leaves smell of citrus.' },
+  ginkgo:    { name: 'Ginkgo', latin: 'Ginkgo biloba', when: 'Nov', from: 'Carotenoids', note: 'Drops its leaves within a day or two', found: 'China, planted worldwide' , fact: 'A living fossil whose lineage goes back over 200 million years. It drops nearly all its leaves in a day or two.' },
+  birch:     { name: 'Paper Birch', latin: 'Betula papyrifera', when: 'Oct', from: 'Carotenoids', note: 'The yellow was there all summer', found: 'Northern North America' , fact: 'Its white bark peels in thin sheets and was used to build canoes. The leaves turn clear yellow in October.' },
+  aspen:     { name: 'Quaking Aspen', latin: 'Populus tremuloides', when: 'Sep', from: 'Carotenoids', note: 'Flat stalks make leaves shiver', found: 'Rockies and Canada' , fact: 'Flat leaf stalks let the leaves tremble in the lightest wind. A whole grove is often one plant on a shared root system.' },
+  tulip:     { name: 'Tulip Tree', latin: 'Liriodendron tulipifera', when: 'Oct', from: 'Carotenoids', note: 'Outline of a tulip seen from the side', found: 'Eastern North America' , fact: 'Named for its tulip-like spring flowers, not its leaves. One of the tallest hardwoods in eastern North America.' },
+  beech:     { name: 'European Beech', latin: 'Fagus sylvatica', when: 'Nov', from: 'Carotenoids, tannins', note: 'Young trees keep dry leaves all winter', found: 'Europe' , fact: 'Young trees often hold their dry, papery leaves all winter, a habit called marcescence.' },
+  oak:       { name: 'English Oak', latin: 'Quercus robur', when: 'Nov', from: 'Tannins', note: 'Holds russet leaves into winter', found: 'Europe' , fact: 'Can live for more than a thousand years, and one tree can host hundreds of insect species.' },
+  chestnut:  { name: 'Sweet Chestnut', latin: 'Castanea sativa', when: 'Nov', from: 'Tannins', note: 'Leaves fall with the nuts', found: 'Southern Europe' , fact: 'These are the chestnuts roasted in winter. Every tooth on the long leaf ends in a fine bristle.' },
+};
+const GROUPS = [
+  { id: 'red', title: 'Crimson', items: ['maple', 'sweetgum', 'sassafras'] },
+  { id: 'gold', title: 'Golden', items: ['ginkgo', 'birch', 'aspen', 'tulip'] },
+  { id: 'brown', title: 'Bronze', items: ['beech', 'oak', 'chestnut'] },
+];
+
+/* Each leaf gets its own tilt so they sit like leaves dropped on paper, not specimens pinned upright */
+const TILT = { maple: -18, sweetgum: 24, sassafras: -8, ginkgo: -28, birch: 34, aspen: 12, tulip: -16, beech: -14, oak: 26, chestnut: -36 };
+const BOX = {};
+function tiltBox(id) {
+  if (BOX[id]) return BOX[id];
+  const s = P[id], a = (TILT[id] || 0) * Math.PI / 180, cx = s.w / 2, cy = s.h / 2, c = Math.cos(a), n = Math.sin(a);
+  const v = s.d.match(/-?\d+(\.\d+)?/g).map(Number);
+  let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9;
+  for (let i = 0; i + 1 < v.length; i += 2) {
+    const dx = v[i] - cx, dy = v[i + 1] - cy, x = cx + dx * c - dy * n, y = cy + dx * n + dy * c;
+    x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); y1 = Math.max(y1, y);
+  }
+  const m = Math.max(x1 - x0, y1 - y0) * 0.04;
+  return BOX[id] = `${x0 - m} ${y0 - m} ${x1 - x0 + 2 * m} ${y1 - y0 + 2 * m}`;
+}
+const shape = id => { const s = P[id];
+  return `<svg viewBox="${tiltBox(id)}" preserveAspectRatio="xMidYMid meet" aria-hidden="true"><path transform="rotate(${TILT[id] || 0} ${s.w / 2} ${s.h / 2})" d="${s.d}"/></svg>`; };
+
+
+const SIDES = [
+  { id: 'red',   label: 'Side A', title: 'Crimson', items: GROUPS[0].items },
+  { id: 'gold',  label: 'Side B', title: 'Golden',  items: GROUPS[1].items },
+  { id: 'brown', label: 'Side C', title: 'Bronze',  items: GROUPS[2].items },
+];
+const ORDER = SIDES.flatMap(s => s.items);
+const open = { red: true };
+const sleeve = document.getElementById('sleeve'), giant = document.getElementById('giant'),
+      print = document.getElementById('print'), detail = document.getElementById('detail');
+const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const chev = `<svg class="chev" viewBox="0 0 12 12" aria-hidden="true"><path d="M4.5 2l4 4-4 4"/></svg>`;
+/* letters wrapped per word, so a long name never breaks mid-word */
+const letters = t => t.split(' ').map(w => `<span class="w">${[...w].map(c => `<span class="ch">${c}</span>`).join('')}</span>`).join(' ');
+const n2 = i => String(i + 1).padStart(2, '0');
+const short = latin => { const [g, s] = latin.split(' '); return `${g[0]}. ${s}`; };
+let shown = null, current = null;
+
+/* the giant leaf: a plain cut to the new shape, no scaling */
+function showLeaf(id) {
+  if (shown === id) return; shown = id;
+  const big = document.getElementById('big'); if (big) big.innerHTML = LEAVES[id].latin.split(' ').map(w => `<span>${w}</span>`).join('');
+  giant.innerHTML = shape(id);
+  giant.firstElementChild.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+}
+const sideOf = id => SIDES.find(s => s.id === id || s.items.includes(id));
+function setSide(key) { const s = sideOf(key); if (s && sleeve.dataset.side !== s.id) sleeve.dataset.side = s.id; }
+
+function render() {
+  print.innerHTML = `<header class="head"><h1 class="title">${letters('Autumn')}</h1></header>
+  <div class="body"><span></span><ul class="list sides">${SIDES.map(s => `<li>
+    <button class="row side" type="button" data-side-id="${s.id}" aria-expanded="${!!open[s.id]}">
+      <span class="num"></span><span class="name">${letters(s.title)}</span><span class="tog" aria-hidden="true"><i></i><i></i></span></button>
+    <div class="kwrap${open[s.id] ? ' open' : ''}"${open[s.id] ? '' : ' inert'}><ul class="list kids">${s.items.map((id, i) => `<li style="--i:${i};--r:${s.items.length - 1 - i}">
+      <button class="row leafrow" type="button" data-leaf="${id}"><span class="num">${n2(ORDER.indexOf(id))}</span><span class="name"><span class="t">${letters(LEAVES[id].name)}</span></span>${chev}</button></li>`).join('')}</ul></div>
+  </li>`).join('')}</ul></div>`;
+}
+
+/* ---------- wind: the same gust that moves letters on hover carries them in and out ---------- */
+/* every gust has its own random direction; letters follow it loosely, each with its own spin, sway, speed and color */
+const rnd = (a, b) => a + Math.random() * (b - a);
+/* one wind for the whole session: picked on load, every gust follows it loosely, so the drifting letters show where it blows */
+const WIND = Math.random() * Math.PI * 2, WX = Math.cos(WIND) < 0 ? -1 : 1;
+const windDir = () => WIND + (Math.random() - .5) * .7;
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+function path(start, end, perp, sway, t) {           /* straight drift plus a decaying side-to-side swing */
+  const s = Math.sin(t * Math.PI * 1.2) * (1 - t) * sway;
+  return [start[0] + (end[0] - start[0]) * t + perp[0] * s, start[1] + (end[1] - start[1]) * t + perp[1] * s];
+}
+function gustIn(chs, base = 0, step = 14, theta = windDir()) {
+  if (reduce) return { done: Promise.resolve(), longest: 0 };
+  const tints = getComputedStyle(sleeve).getPropertyValue('--tints').split(',').map(x => x.trim()).filter(Boolean);
+  let last = Promise.resolve(), longest = 0;
+  chs.forEach((c, i) => {
+    const ink = getComputedStyle(c).color, tint = tints[(Math.random() * tints.length) | 0] || ink;
+    const ang = theta + rnd(-.4, .4), d = rnd(12, 30), dir = [Math.cos(ang), Math.sin(ang)], perp = [-dir[1], dir[0]];
+    const start = [-dir[0] * d, -dir[1] * d], sway = rnd(2, 6) * (Math.random() < .5 ? -1 : 1), r0 = rnd(-40, 40);
+    const k = [0, .3, .55, .8, 1].map((t, j) => {
+      const [x, y] = path(start, [0, 0], perp, sway, t);
+      const r = j === 4 ? 0 : r0 * (1 - t) * (j % 2 ? -.35 : 1);
+      return { transform: `translate(${x.toFixed(1)}px, ${y.toFixed(1)}px) rotate(${r.toFixed(1)}deg)`,
+        opacity: t === 0 ? 0 : 1, color: t === 1 ? ink : tint, offset: t };
+    });
+    const dur = rnd(800, 1150), delay = base + Math.min(i * step * .5, 160) + rnd(0, 120);
+    const a = c.animate(k, { duration: dur, delay, easing: 'cubic-bezier(.25,.5,.3,1)', fill: 'backwards' });
+    if (dur + delay > longest) { longest = dur + delay; last = a.finished; }
+  });
+  return { done: last, longest };
+}
+function gustOut(chs, step = 8, theta = windDir()) {
+  if (reduce) return { done: Promise.resolve(), longest: 0 };
+  let longest = 0;
+  const anims = chs.map((c, i) => {
+    const ang = theta + rnd(-.6, .6), d = rnd(30, 90), dir = [Math.cos(ang), Math.sin(ang)], perp = [-dir[1], dir[0]];
+    const end = [dir[0] * d, dir[1] * d], sway = rnd(4, 12) * (Math.random() < .5 ? -1 : 1), r1 = rnd(60, 200) * (Math.random() < .5 ? -1 : 1);
+    const k = [0, .35, .7, 1].map(t => { const [x, y] = path([0, 0], end, perp, sway, t);
+      return { transform: `translate(${x.toFixed(1)}px, ${y.toFixed(1)}px) rotate(${(r1 * t).toFixed(1)}deg)`, opacity: t < .35 ? 1 : 1 - (t - .35) / .65, offset: t }; });
+    const dur = rnd(520, 820), delay = Math.min(i * step * .5, 140) + rnd(0, 140);
+    longest = Math.max(longest, dur + delay);
+    return c.animate(k, { duration: dur, delay, easing: 'cubic-bezier(.4,.05,.65,.6)', fill: 'forwards' });
+  });
+  return { done: Promise.all(anims.map(a => a.finished)), longest };
+}
+const fadeIn = (els, delay = 0) => els.forEach(el => el && !reduce && el.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 360, delay, fill: 'backwards' }));
+/* titles only answer the pointer; the wind (gusts, idle drift) moves the smaller text */
+const visibleLetters = root => [...root.querySelectorAll('.ch')].filter(c => c.offsetParent && !c.closest('.kwrap:not(.open), .title, .d-name'));
+const clear = els => els.forEach(c => c.getAnimations().forEach(a => a.cancel()));
+
+async function toggleSide(btn) {
+  const id = btn.dataset.sideId, wrap = btn.nextElementSibling, rows = [...wrap.querySelectorAll('.kids > li')];
+  open[id] = !open[id]; btn.setAttribute('aria-expanded', open[id]); clearTimeout(wrap._t1); clearTimeout(wrap._t2);
+  const letters = rows.flatMap(li => [...li.querySelectorAll('.ch')]);
+  if (open[id]) {
+    clear(letters); wrap.classList.remove('gusting');
+    wrap.inert = false; wrap.classList.add('open'); setSide(id); showLeaf(sideOf(id).items[0]);
+    const theta = windDir();
+    let longest = 0;
+    rows.forEach((li, r) => { longest = Math.max(longest, gustIn([...li.querySelectorAll('.ch')], 60 + r * 80, 18, theta).longest); fadeIn([...li.querySelectorAll('.num')], 240 + r * 80); });
+    settle(longest);
+  } else {
+    wrap.inert = true;
+    if (reduce) return wrap.classList.remove('open');
+    wrap.classList.add('gusting');                         /* letters can leave the box instead of being clipped */
+    const { longest } = gustOut(rows.slice().reverse().flatMap(li => [...li.querySelectorAll('.ch')]), 6);
+    wrap._t1 = setTimeout(() => { if (!open[id]) wrap.classList.remove('open'); }, longest * .4);   /* start closing mid-gust */
+    wrap._t2 = setTimeout(() => { if (!open[id]) { clear(letters); wrap.classList.remove('gusting'); } }, longest + 560);
+  }
+}
+
+let busy = false, queued = null;
+/* a click that lands mid-transition is kept and played as soon as the current one finishes */
+const done = () => { busy = false; const q = queued; queued = null; q && q(); };
+async function openLeaf(id) {
+  if (busy) { queued = () => openLeaf(id); return; } busy = true;
+  current = id; setSide(id); showLeaf(id);
+  const L = LEAVES[id], theta = windDir();
+  sleeve.classList.add('gusting');
+  const old = visibleLetters(print), { longest } = gustOut(old, 3, theta);
+  /* numbers, toggles and chevrons fade with the gust instead of waiting behind it */
+  const fixed = [...print.querySelectorAll('.title, .num, .tog, .chev')];
+  if (!reduce) fixed.forEach(el => el.animate([{ opacity: getComputedStyle(el).opacity }, { opacity: 0 }], { duration: 260, fill: 'forwards' }));
+  await sleep(longest * .45);                              /* the title starts drifting in while the list is still leaving */
+  detail.innerHTML = `<button class="back" type="button" data-back>${chev}Autumn</button>
+    <h2 class="d-name">${letters(L.name)}</h2><span></span><p class="d-fact">${letters(L.fact)}</p>`;
+  print.classList.add('leaving'); sleeve.classList.add('detail-on');
+  /* the title simply appears; the small note is what the wind carries in */
+  fadeIn([detail.querySelector('.d-name'), detail.querySelector('.back')], 0);
+  /* the note settles in quietly; only a few letters are carried in on the wind, from upwind */
+  const fact = detail.querySelector('.d-fact'), chs = [...fact.querySelectorAll('.ch')];
+  fadeIn([fact], 160);
+  gustIn(chs.filter(c => /\w/.test(c.textContent)).sort(() => Math.random() - .5).slice(0, 8), 220, 40, theta);
+  detail.querySelector('[data-back]').focus({ preventScroll: true });
+  /* busy stays on until the hand-off finishes, so a quick second click cannot interleave two transitions */
+  setTimeout(() => { print.classList.remove('leaving'); sleeve.classList.remove('gusting'); clear(old); clear(fixed); done(); }, longest * .6 + 60);
+}
+async function closeLeaf() {
+  if (busy) { queued = () => current && closeLeaf(); return; } busy = true;
+  const id = current; current = null; const theta = windDir();
+  const old = [...detail.querySelectorAll('.d-fact .ch')], { longest } = gustOut(old, 4, theta);
+  detail.querySelectorAll('.back, .d-name').forEach(el => !reduce && el.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 300, fill: 'forwards' }));
+  await sleep(longest * .45);
+  detail.classList.add('leaving'); sleeve.classList.remove('detail-on');
+  settle(gustIn(visibleLetters(print), 0, 4, theta).longest);
+  const fixed = [...print.querySelectorAll('.num, .tog, .title, .chev')]; clear(fixed);
+  fadeIn(fixed, 200);
+  print.querySelector(`[data-leaf="${id}"]`)?.focus({ preventScroll: true });
+  setTimeout(() => { detail.classList.remove('leaving'); detail.innerHTML = ''; done(); }, longest * .6 + 60);
+}
+
+/* while letters are still arriving, hovering does not swap the background; the last row hovered is applied once they land */
+let settleUntil = 0, pending = null, settleT;
+function settle(ms) {
+  settleUntil = clock() + ms; clearTimeout(settleT);
+  settleT = setTimeout(() => { if (pending && !current) hoverSwap(pending); pending = null; }, ms);
+}
+function hoverSwap(t) {
+  const leaf = t.closest('[data-leaf]'); if (leaf) { setSide(leaf.dataset.leaf); showLeaf(leaf.dataset.leaf); return; }
+  const side = t.closest('[data-side-id]'); if (side) setSide(side.dataset.sideId);
+}
+sleeve.addEventListener('pointerover', e => {
+  if (current) return;
+  if (clock() < settleUntil) { pending = e.target; return; }
+  const leaf = e.target.closest('[data-leaf]'); if (leaf) { setSide(leaf.dataset.leaf); showLeaf(leaf.dataset.leaf); return; }
+  const side = e.target.closest('[data-side-id]'); if (side) setSide(side.dataset.sideId);
+});
+sleeve.addEventListener('focusin', e => {
+  if (current) return;
+  const leaf = e.target.closest('[data-leaf]'); if (leaf) { setSide(leaf.dataset.leaf); showLeaf(leaf.dataset.leaf); }
+});
+sleeve.addEventListener('click', e => {
+  if (e.target.closest('[data-back]')) return closeLeaf();
+  const side = e.target.closest('[data-side-id]'); if (side) return toggleSide(side);
+  const leaf = e.target.closest('[data-leaf]'); if (leaf) openLeaf(leaf.dataset.leaf);
+});
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && current) closeLeaf(); });
+/* Flutter: every letter hangs from its top like a leaf on a branch; the pointer is the breeze */
+sleeve.addEventListener('pointerover', e => {
+  const c = e.target.closest('.ch'); if (!c || reduce || c.getAnimations().length) return;
+  const big = parseFloat(getComputedStyle(c).fontSize) > 30;   /* big letters swing less, so the title stays calm */
+  const dir = WX, a = (big ? 6 + Math.random() * 4 : 14 + Math.random() * 8) * dir;     /* letters always swing downwind first */
+  /* each letter turns one shade of the current group's color while it swings, like leaves on one tree, then fades back */
+  const tints = getComputedStyle(sleeve).getPropertyValue('--tints').split(',').map(x => x.trim()).filter(Boolean);
+  const ink = getComputedStyle(c).color, tint = tints[(Math.random() * tints.length) | 0] || ink;
+  c.animate([{ transform: 'rotate(0)', color: ink, offset: 0 }, { transform: `rotate(${a}deg)`, color: tint, offset: .2 },
+    { transform: `rotate(${-a * .6}deg)`, color: tint, offset: .4 }, { transform: `rotate(${a * .35}deg)`, color: tint, offset: .6 },
+    { transform: `rotate(${-a * .15}deg)`, offset: .8 }, { transform: 'rotate(0)', color: ink, offset: 1 }],
+    { duration: 1400, easing: 'ease-out' });
+});
+/* keyboard focus gets a soft ripple through the whole name instead */
+sleeve.addEventListener('focusin', e => {
+  if (reduce || e.target.matches(':hover')) return;
+  e.target.querySelectorAll('.ch').forEach((c, i) => c.animate([{ transform: 'rotate(0)' }, { transform: 'rotate(10deg)' }, { transform: 'rotate(-5deg)' }, { transform: 'rotate(0)' }],
+    { duration: 800, delay: i * 30, easing: 'ease-out' }));
+});
+/* the big leaf is alive: it hangs from its stem and is pushed by the wind like a spring, never a stiff rotation.
+   The blade bends (the tip travels further than the base) and a small ripple runs from stem to tip while a gust passes. */
+const leafSim = { ang: 0, vel: 0, gusts: [], el: null, pts: null, piv: null, R: 1, t0: 0, last: 0 };
+function leafGust(delay, strength) { leafSim.gusts.push({ at: clock() + delay, s: strength }); }
+function leafLoad() {
+  const path = giant.querySelector('path'); if (!path || path === leafSim.el) return !!path;
+  leafSim.el = path; leafSim.src = path.getAttribute('d');
+  const v = leafSim.src.match(/-?\d+(\.\d+)?/g).map(Number);
+  let piv = [0, -1e9]; for (let i = 0; i + 1 < v.length; i += 2) if (v[i + 1] > piv[1]) piv = [v[i], v[i + 1]];   /* stem end = lowest point of the upright leaf */
+  let R = 1; for (let i = 0; i + 1 < v.length; i += 2) R = Math.max(R, Math.hypot(v[i] - piv[0], v[i + 1] - piv[1]));
+  leafSim.pts = v; leafSim.piv = piv; leafSim.R = R; return true;
+}
+function leafTick() {
+  requestAnimationFrame(leafTick); const now = clock();
+  if (reduce || !leafLoad()) return;
+  const S = leafSim, dt = Math.min(.05, (now - (S.last || now)) / 1000); S.last = now;
+  const t = (now - S.t0) / 1000;
+  /* gust envelope: a soft rise and a longer fall */
+  let g = 0; S.gusts = S.gusts.filter(q => now - q.at < 3200);
+  S.gusts.forEach(q => { const u = (now - q.at) / 1000; if (u > 0) g += q.s * (u < .5 ? Math.sin(u / .5 * Math.PI / 2) : Math.exp(-(u - .5) * 1.6)); });
+  S.g = g;
+  const target = WX * (.3 + 1.7 * g) + .2 * Math.sin(t * .7) + .12 * Math.sin(t * 1.9 + 1);   /* a steady lean, the gust, and idle drift */
+  S.vel += (14 * (target - S.ang) - 2.2 * S.vel) * dt; S.ang += S.vel * dt;
+  const F = .08 + .6 * g, [px, py] = S.piv, v = S.pts, out = new Array(v.length);
+  for (let i = 0; i + 1 < v.length; i += 2) {
+    const dx = v[i] - px, dy = v[i + 1] - py, r = Math.hypot(dx, dy) / S.R;
+    const a = (S.ang * Math.pow(r, 1.4) + F * Math.sin(t * 7 - r * 5) * r) * Math.PI / 180, c = Math.cos(a), s = Math.sin(a);
+    out[i] = (px + dx * c - dy * s).toFixed(1); out[i + 1] = (py + dx * s + dy * c).toFixed(1);
+  }
+  let k = 0; S.el.setAttribute('d', S.src.replace(/-?\d+(\.\d+)?/g, () => out[k++]));
+}
+requestAnimationFrame(leafTick);
+/* a few loose letters are always in the air, carried across the card like stray leaves: they enter upwind,
+   sway and spin as they drift, ride faster in a gust, and dodge the pointer. They are borrowed from the page you are on. */
+const drift = document.createElement('div'); drift.className = 'drift'; drift.setAttribute('aria-hidden', 'true'); giant.after(drift);
+const flyers = [], ptr = { x: -999, y: -999 };
+sleeve.addEventListener('pointermove', e => { const b = sleeve.getBoundingClientRect(); ptr.x = e.clientX - b.left; ptr.y = e.clientY - b.top; });
+sleeve.addEventListener('pointerleave', () => { ptr.x = ptr.y = -999; });
+const lumOf = hex => { const n = parseInt(hex.slice(1), 16), c = [n >> 16, (n >> 8) & 255, n & 255].map(v => { v /= 255; return v <= .03928 ? v / 12.92 : ((v + .055) / 1.055) ** 2.4; });
+  return .2126 * c[0] + .7152 * c[1] + .0722 * c[2]; };
+const contrast = (a, b) => { const x = lumOf(a), y = lumOf(b); return (Math.max(x, y) + .05) / (Math.min(x, y) + .05); };
+function flyerColor() {
+  const cs = getComputedStyle(sleeve), sky = cs.getPropertyValue('--sky').trim(), leaf = cs.getPropertyValue('--leaf').trim();
+  const tints = cs.getPropertyValue('--tints').split(',').map(x => x.trim()).filter(Boolean);
+  const ok = tints.filter(c => Math.min(contrast(c, sky), contrast(c, leaf)) >= 1.8);
+  const pool = ok.length ? ok : tints.slice().sort((a, b) => Math.min(contrast(b, sky), contrast(b, leaf)) - Math.min(contrast(a, sky), contrast(a, leaf))).slice(0, 2);
+  return pool[(Math.random() * pool.length) | 0];
+}
+function pickLetter() {
+  const src = current ? LEAVES[current].name + LEAVES[current].fact : 'autumn crimson golden bronze ' + ORDER.map(k => LEAVES[k].name).join('');
+  const pool = src.toLowerCase().replace(/[^a-z]/g, ''); return pool[(Math.random() * pool.length) | 0];
+}
+function spawn(f, first) {
+  const W = sleeve.clientWidth, H = sleeve.clientHeight;
+  f.el.textContent = pickLetter(); f.el.style.color = flyerColor();  /* one of the current group's colors */
+  f.size = rnd(15, 28); f.el.style.fontSize = f.size + 'px'; f.el.style.opacity = rnd(.65, .95).toFixed(2);
+  f.fall = rnd(80, 130); f.glide = rnd(50, 95); f.w = rnd(2.4, 3.6); f.ph = rnd(0, 6.3); f.flip = rnd(1.5, 4); f.tumble = Math.random() < .25 ? rnd(120, 300) * (Math.random() < .5 ? -1 : 1) : 0;
+  f.rot = 0; f.n = rnd(0, 100); f.px = 0; f.py = 0;
+  if (first) { f.x = rnd(0, W); f.y = rnd(0, H); return; }
+  if (Math.random() < .55) { f.x = rnd(-.2, 1.2) * W - Math.cos(WIND) * W * .3; f.y = -30; }          /* from above */
+  else { f.x = Math.cos(WIND) > 0 ? -30 : W + 30; f.y = rnd(-.1, .45) * H; }                            /* from the upwind side */
+}
+function flyTick() {
+  requestAnimationFrame(flyTick); const now = clock();
+  if (reduce) return;
+  while (flyers.length < 4) { const el = document.createElement('span'); drift.append(el); const f = { el }; spawn(f, true); flyers.push(f); }
+  const dt = Math.min(.05, (now - (flyTick.last || now)) / 1000); flyTick.last = now;
+  const t = now / 1000, W = sleeve.clientWidth, H = sleeve.clientHeight, g = leafSim.g || 0, boost = 1 + 1.8 * g;
+  const wx = Math.cos(WIND), wy = Math.sin(WIND) * .3;
+  /* now and then a flyer finds the same letter on the page, lands on it, and knocks the original off into the wind */
+  if (!busy && now > (flyTick.nextLand || 5000) && !flyers.some(f => f.target)) {
+    flyTick.nextLand = now + rnd(8000, 13000);
+    const b = sleeve.getBoundingClientRect(), page = visibleLetters(current ? detail : print).filter(c => !c.getAnimations().length);
+    let best = null;
+    flyers.forEach(f => { if (f.x < 0 || f.x > W || f.y < 0) return;
+      page.forEach(c => { if (c.textContent.toLowerCase() !== f.el.textContent) return;
+        const r = c.getBoundingClientRect(), d = Math.hypot(r.left - b.left - f.x, r.top - b.top - f.y);
+        if (d < 260 && (!best || d < best.d)) best = { f, c, d }; }); });
+    if (best) { const cs = getComputedStyle(best.c); Object.assign(best.f, { target: best.c, t0: now, sx: best.f.x, sy: best.f.y, s0: best.f.size, s1: parseFloat(cs.fontSize), r0: best.f.rot });
+      best.f.el.style.fontStyle = cs.fontStyle; best.f.el.style.lineHeight = cs.lineHeight; }
+  }
+  flyers.forEach(f => {
+    if (f.target) {                                                                          /* homing in: the swing settles as it lands */
+      const c = f.target, b = sleeve.getBoundingClientRect(), r = c.getBoundingClientRect();
+      if (!c.offsetParent || busy) { f.target = null; f.el.style.fontStyle = ''; f.el.style.lineHeight = ''; return; }
+      const u = Math.min(1, (now - f.t0) / 1100), e = 1 - Math.pow(1 - u, 3), tx = r.left - b.left, ty = r.top - b.top;
+      const arc = Math.sin(u * Math.PI) * 26 * WX;                                          /* a last little swoop */
+      f.x = f.sx + (tx - f.sx) * e + arc * (1 - u); f.y = f.sy + (ty - f.sy) * e;
+      f.el.style.fontSize = (f.s0 + (f.s1 - f.s0) * e).toFixed(1) + 'px';
+      f.el.style.opacity = (+f.el.style.opacity + (1 - +f.el.style.opacity) * e).toFixed(2);
+      const sw = Math.sin(f.ph) * 30 * (1 - e);
+      f.el.style.transform = `translate(${f.x.toFixed(1)}px, ${f.y.toFixed(1)}px) rotate(${((f.r0 % 360) * (1 - e) + sw).toFixed(1)}deg)`;
+      if (u >= 1 && !f.landed) {
+        f.landed = true; f.el.style.opacity = 1;                                            /* it keeps its own color: the new letter is visibly a stranger */
+        const { longest } = gustOut([c], 0, windDir());                                    /* the original is blown off */
+        const col = f.el.style.color;
+        setTimeout(() => { clear([c]);
+          /* the newcomer takes the original's place in its own color, then slowly blends into the text */
+          if (!reduce) c.animate([{ color: col }, { color: col, offset: .45 }, { color: getComputedStyle(c).color }], { duration: 6000, easing: 'ease-in-out' });
+          f.target = null; f.landed = false; f.el.style.fontStyle = ''; f.el.style.lineHeight = ''; spawn(f, false); }, longest + 40);
+      }
+      return;
+    }
+    /* falling-leaf motion: a pendulum glide (sideways in the middle of each swing, dropping at the ends),
+       tilted along the glide, pushed by a wind that is never steady, and harder in a gust */
+    f.ph += f.w * dt;
+    const swing = Math.sin(f.ph), turn = Math.abs(Math.cos(f.ph));
+    const gustW = (70 + 45 * Math.sin(t * .9 + f.n) + 25 * Math.sin(t * 2.3 + f.n * 2)) * boost;   /* turbulence */
+    const vx = wx * gustW + swing * f.glide * (1 - Math.abs(wx) * .3);
+    const vy = f.fall * (.45 + .9 * (1 - turn)) + wy * gustW * .6;
+    f.x += vx * dt; f.y += vy * dt;
+    const dx = f.x - ptr.x, dy = f.y - ptr.y, d = Math.hypot(dx, dy);                        /* the pointer is a hand brushing them aside */
+    if (d < 80) { const k = (1 - d / 80) * 900 * dt; f.px += dx / (d || 1) * k; f.py += dy / (d || 1) * k; }
+    f.px *= Math.pow(.04, dt); f.py *= Math.pow(.04, dt); f.x += f.px * dt; f.y += f.py * dt;
+    f.rot += f.tumble * boost * dt;
+    const tilt = swing * 38 + Math.atan2(vy, vx) * 0;                                          /* leans into each swing */
+    const fl = Math.cos(t * f.flip * boost + f.n);                                             /* turning over in the air */
+    f.el.style.transform = `translate(${f.x.toFixed(1)}px, ${f.y.toFixed(1)}px) rotate(${(f.rot + tilt).toFixed(1)}deg) scaleX(${(Math.sign(fl) * Math.max(.15, Math.abs(fl))).toFixed(2)})`;
+    if (f.x < -60 || f.x > W + 60 || f.y > H + 40 || f.y < -80) spawn(f, false);
+  });
+}
+requestAnimationFrame(flyTick);
+/* a breeze crosses the whole card every few seconds: every visible letter leans downwind as the front reaches it,
+   upwind side first, so you can watch it travel across the page. Big type leans only a little. */
+function idle() {
+  setTimeout(idle, current ? rnd(2600, 4200) : rnd(3800, 6200));
+  if (reduce || document.hidden || busy) return;
+  const box = sleeve.getBoundingClientRect(), dx = Math.cos(WIND), dy = Math.sin(WIND);
+  const chs = [...(current ? detail : print).querySelectorAll('.ch')]
+    .filter(c => c.offsetParent && !c.closest('.kwrap:not(.open)') && c.textContent.trim() && !c.getAnimations().length);
+  const at = chs.map(c => { const r = c.getBoundingClientRect(); return (r.left + r.width / 2 - box.left) * dx + (r.top + r.height / 2 - box.top) * dy; });
+  const lo = Math.min(...at), span = Math.max(...at) - lo || 1, gust = rnd(.8, 1.2);
+  leafGust(1300 * .5 - 150, gust);
+  /* one to three letters ride the gust a little further: from the middle of longer words, so every word still reads */
+  const riders = new Set(chs.filter(c => { const w = [...c.parentNode.children]; const k = w.indexOf(c);
+      return w.length >= 5 && k > 0 && k < w.length - 1 && /[a-z]/.test(c.textContent) && parseFloat(getComputedStyle(c).fontSize) <= 30; })
+    .sort(() => Math.random() - .5).slice(0, 1 + ((Math.random() * 3) | 0)));
+  chs.forEach((c, i) => {
+    if (riders.has(c)) {
+      const d = rnd(9, 15) * gust, r = rnd(50, 110) * WX, x = dx * d, y = dy * d * .5 - rnd(5, 8);
+      return c.animate([{ transform: 'none' }, { transform: `translate(${(x * .5).toFixed(1)}px, ${(y * .6).toFixed(1)}px) rotate(${(r * .4).toFixed(0)}deg)`, offset: .2 },
+        { transform: `translate(${x.toFixed(1)}px, ${y.toFixed(1)}px) rotate(${r.toFixed(0)}deg)`, offset: .4 },
+        { transform: `translate(${(x * 1.1).toFixed(1)}px, ${(y * .85).toFixed(1)}px) rotate(${(r * .7).toFixed(0)}deg)`, offset: .58 },   /* hangs in the air */
+        { transform: `translate(${(x * .35).toFixed(1)}px, ${(y * .3).toFixed(1)}px) rotate(${(-r * .15).toFixed(0)}deg)`, offset: .82 }, { transform: 'none' }],
+        { duration: rnd(2400, 2900), delay: (at[i] - lo) / span * 1300, easing: 'ease-in-out' });
+    }
+    const big = parseFloat(getComputedStyle(c).fontSize) > 30, a = (big ? rnd(3, 5) : rnd(9, 15)) * WX * gust, d = (big ? 1.5 : 3) * gust;
+    c.animate([{ transform: 'none' }, { transform: `translate(${(dx * d).toFixed(1)}px, ${(dy * d * .5).toFixed(1)}px) rotate(${a.toFixed(1)}deg)`, offset: .3 },
+      { transform: `rotate(${(-a * .4).toFixed(1)}deg)`, offset: .58 }, { transform: `rotate(${(a * .15).toFixed(1)}deg)`, offset: .8 }, { transform: 'none' }],
+      { duration: rnd(1200, 1500), delay: (at[i] - lo) / span * 1300 + rnd(0, 90), easing: 'ease-in-out' });
+  });
+}
+
+/* ---------- slow motion: one clock for everything (WAAPI, CSS transitions, timers, the leaf and the flyers) ---------- */
+document.getElementById('slow').addEventListener('change', e => { SPEED = e.target.checked ? .25 : 1;
+  document.getAnimations().forEach(a => { try { a.playbackRate = SPEED; } catch (_) {} }); });
+const spec = document.getElementById('spec'), specBtn = document.getElementById('spec-btn');
+const setSpec = o => { spec.hidden = !o; specBtn.setAttribute('aria-expanded', o); };
+specBtn.addEventListener('click', () => setSpec(spec.hidden));
+document.getElementById('spec-close').addEventListener('click', () => setSpec(false));
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && !spec.hidden && !current) setSpec(false); });
+render(); showLeaf('maple'); setTimeout(idle, 1200);
+</script>
