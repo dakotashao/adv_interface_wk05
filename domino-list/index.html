@@ -11,7 +11,7 @@
    been edited has its domino down, leaning the way it was pushed. Reset all stands them back up, top to bottom. */
 :root {
   --bg: #f6f6f6; --card: #ffffff; --ink: #17181b; --muted: #62666d; --line: #dfe0e4; --press: #eeeef1;
-  --rail: #eeeef1; --rail-hover: #e8e8ec; --rail-press: #e3e3e7; --stop: #b9bcc2; --solid: #1b1c20;
+  --rail: #eeeef1; --rail-hover: #e8e8ec; --rail-press: #e3e3e7; --rail-limit: #d6d7dc; --stop: #b9bcc2; --solid: #1b1c20;
   --card-shadow: 0 22px 44px -14px rgba(26, 28, 36, 0.18), 0 3px 8px rgba(26, 28, 36, 0.05), inset 0 0 0 1px rgba(255, 255, 255, 0.9);
   --sans: "Geist", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   --mono: "Geist Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
@@ -19,7 +19,7 @@
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     --bg: #0f1012; --card: #202226; --ink: #eeeff1; --muted: #9a9ea5; --line: #2a2c31; --press: #2c2f34;
-    --rail: #2f3237; --rail-hover: #34373d; --rail-press: #393c42; --stop: #5a5e66; --solid: #eeeff1;
+    --rail: #2f3237; --rail-hover: #34373d; --rail-press: #393c42; --rail-limit: #464a51; --stop: #5a5e66; --solid: #eeeff1;
     --card-shadow: 0 22px 44px -14px rgba(0, 0, 0, 0.7), 0 3px 8px rgba(0, 0, 0, 0.3), inset 0 0 0 1px rgba(255, 255, 255, 0.07);
     color-scheme: dark;
   }
@@ -92,6 +92,8 @@ html.pointer-mode .arow:focus-visible, html.pointer-mode .pk:focus-visible, html
 .arow:focus-visible { box-shadow: 0 0 0 2px var(--card), 0 0 0 4px var(--ink); }
 .arow .bg { position: absolute; inset: 0; border-radius: 24px; background: var(--rail); opacity: 0; pointer-events: none; transition: background-color 140ms ease; }
 .arow.drag .bg { background: var(--rail-press); }
+/* at the end of its range (−100 / 0 / +100) the pill goes a step darker: nothing more this way */
+.arow.limit .bg { background: var(--rail-limit); }
 .arow .ico { position: absolute; left: 16px; top: 16px; }
 .arow .label { position: absolute; left: 44px; top: 12px; white-space: nowrap; pointer-events: none; }
 .arow .win { position: absolute; left: 134px; right: 94px; top: 0; height: 48px; overflow: hidden; pointer-events: none; opacity: 0;
@@ -160,6 +162,8 @@ html.pointer-mode .arow:focus-visible, html.pointer-mode .pk:focus-visible, html
 .pk3:hover { background: var(--rail-hover); }
 .pk3.drag { background: var(--rail-press); cursor: grabbing; }
 .pk3:focus-visible { box-shadow: 0 0 0 2px var(--card), 0 0 0 4px var(--ink); }
+#pk3 { perspective: 520px; }
+#pk3 .pk-row { transform-origin: 50% 100%; }
 .pk3-line { position: absolute; left: 0; right: 0; top: 132px; height: 1px; margin-top: -0.5px; background: var(--ink); pointer-events: none; }
 .controls { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 10px 8px; padding: 0 16px 28px; }
 .btn { appearance: none; height: 42px; padding: 0 16px; border: 0; border-radius: 999px; background: var(--card); box-shadow: inset 0 0 0 1px var(--line); color: var(--ink); font: 400 14px/1 var(--sans); cursor: pointer; }
@@ -231,11 +235,12 @@ body { margin: 0; background: var(--bg); color: var(--ink); font: 400 15px/1.4 v
 .tape.drag { background: var(--tape-press); cursor: grabbing; }
 .rows { position: absolute; left: 0; right: 0; top: 0; will-change: transform; transform-style: preserve-3d; }
 .row { position: absolute; left: 0; right: 0; height: 44px; display: grid; grid-template-columns: 28px 1fr; align-items: center; gap: 8px; padding: 0 16px; transform-origin: 50% 100%; will-change: transform; }
-.row .i { font: 400 14px/20px var(--sans); color: var(--faint); font-variant-numeric: tabular-nums; }
+.row .ico { width: 16px; height: 16px; color: var(--muted); fill: none; stroke: currentColor; stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round; }
+.row .ico .f { fill: currentColor; stroke: none; }
 .row .t { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font: 400 16px/24px var(--sans); letter-spacing: -0.005em; color: var(--muted); }
 .row .t b { font-weight: 400; color: inherit; }
 .row .y { font: 400 16px/24px var(--sans); color: var(--muted); font-variant-numeric: tabular-nums; }
-.row.now .i, .row.now .y, .row.now .t { color: var(--ink); }
+.row.now .ico, .row.now .y, .row.now .t { color: var(--ink); }
 /* The reading line: 1 wide, full width, fixed. It is what knocks the rows over. */
 .line { position: absolute; left: 0; right: 0; height: 1px; background: var(--ink); pointer-events: none; will-change: transform; }
 .controls { display: flex; justify-content: center; gap: 8px; }
@@ -263,6 +268,16 @@ body { margin: 0; background: var(--bg); color: var(--ink); font: 400 15px/1.4 v
 (() =&gt; {
   const TRACKS = [[&#x27;Exposure&#x27;, &#x27;+12&#x27;], [&#x27;Contrast&#x27;, &#x27;0&#x27;], [&#x27;Highlights&#x27;, &#x27;\u221230&#x27;], [&#x27;Shadows&#x27;, &#x27;+18&#x27;],
     [&#x27;Saturation&#x27;, &#x27;0&#x27;], [&#x27;Warmth&#x27;, &#x27;0&#x27;], [&#x27;Sharpness&#x27;, &#x27;0&#x27;], [&#x27;Grain&#x27;, &#x27;+40&#x27;]];
+  const ICONS = {
+    Exposure: &#x27;&lt;path d=&quot;M12 4v8M8 8h8M8 18.5h8&quot;/&gt;&#x27;,
+    Contrast: &#x27;&lt;circle cx=&quot;12&quot; cy=&quot;12&quot; r=&quot;8.5&quot;/&gt;&lt;path class=&quot;f&quot; d=&quot;M12 3.5a8.5 8.5 0 0 1 0 17z&quot;/&gt;&#x27;,
+    Highlights: &#x27;&lt;circle cx=&quot;12&quot; cy=&quot;12&quot; r=&quot;3.5&quot;/&gt;&lt;path d=&quot;M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6l1.4 1.4M17 17l1.4 1.4M5.6 18.4 7 17M17 7l1.4-1.4&quot;/&gt;&#x27;,
+    Shadows: &#x27;&lt;path d=&quot;M19.5 14.2A7.8 7.8 0 1 1 9.8 4.5a6.2 6.2 0 0 0 9.7 9.7z&quot;/&gt;&#x27;,
+    Saturation: &#x27;&lt;path d=&quot;M12 3.5s6 6.3 6 10.6a6 6 0 0 1-12 0c0-4.3 6-10.6 6-10.6z&quot;/&gt;&#x27;,
+    Warmth: &#x27;&lt;path d=&quot;M10 14.3V5.5a2 2 0 0 1 4 0v8.8a4 4 0 1 1-4 0z&quot;/&gt;&lt;path d=&quot;M12 16.5V10&quot;/&gt;&#x27;,
+    Sharpness: &#x27;&lt;path d=&quot;M12 4.5 20.5 19h-17z&quot;/&gt;&lt;path class=&quot;f&quot; d=&quot;M12 4.5 20.5 19H12z&quot;/&gt;&#x27;,
+    Grain: &#x27;&lt;circle class=&quot;f&quot; cx=&quot;7&quot; cy=&quot;7&quot; r=&quot;1.25&quot;/&gt;&lt;circle class=&quot;f&quot; cx=&quot;13&quot; cy=&quot;5.5&quot; r=&quot;1.25&quot;/&gt;&lt;circle class=&quot;f&quot; cx=&quot;17.5&quot; cy=&quot;9&quot; r=&quot;1.25&quot;/&gt;&lt;circle class=&quot;f&quot; cx=&quot;10&quot; cy=&quot;11.5&quot; r=&quot;1.25&quot;/&gt;&lt;circle class=&quot;f&quot; cx=&quot;5.5&quot; cy=&quot;15&quot; r=&quot;1.25&quot;/&gt;&lt;circle class=&quot;f&quot; cx=&quot;15&quot; cy=&quot;14&quot; r=&quot;1.25&quot;/&gt;&lt;circle class=&quot;f&quot; cx=&quot;10.5&quot; cy=&quot;18&quot; r=&quot;1.25&quot;/&gt;&lt;circle class=&quot;f&quot; cx=&quot;18.5&quot; cy=&quot;18.5&quot; r=&quot;1.25&quot;/&gt;&#x27;
+  };
   const N = TRACKS.length, RH = 44, LINE = 124;           // row height; the line sits low so the fallen pile has room above it
   const REDUCE = matchMedia(&#x27;(prefers-reduced-motion: reduce)&#x27;).matches;
   const $ = (id) =&gt; document.getElementById(id), rowsEl = $(&#x27;rows&#x27;), tape = $(&#x27;tape&#x27;), card = $(&#x27;card&#x27;), lineEl = $(&#x27;line&#x27;), countEl = $(&#x27;count&#x27;);
@@ -277,7 +292,7 @@ body { margin: 0; background: var(--bg); color: var(--ink); font: 400 15px/1.4 v
 
   const rows = TRACKS.map(([t, y], i) =&gt; {
     const el = document.createElement(&#x27;div&#x27;); el.className = &#x27;row&#x27;; el.id = &#x27;r&#x27; + i; el.setAttribute(&#x27;role&#x27;, &#x27;option&#x27;);
-    el.innerHTML = `&lt;span class=&quot;i&quot;&gt;${String(i + 1).padStart(2, &#x27;0&#x27;)}&lt;/span&gt;&lt;span class=&quot;t&quot;&gt;&lt;b&gt;${t}&lt;/b&gt;&lt;/span&gt;`;
+    el.innerHTML = `&lt;svg class=&quot;ico&quot; viewBox=&quot;0 0 24 24&quot; aria-hidden=&quot;true&quot;&gt;${ICONS[t]}&lt;/svg&gt;&lt;span class=&quot;t&quot;&gt;&lt;b&gt;${t}&lt;/b&gt;&lt;/span&gt;`;
     el.style.top = &#x27;0px&#x27;; rowsEl.append(el);
     return { el, ang: { x: 0, v: 0 }, lift: { x: 0, v: 0 }, knock: 0 };
   });
@@ -436,7 +451,7 @@ body { margin: 0; background: var(--bg); color: var(--ink); font: 400 15px/1.4 v
       </dl></div>
       <div class="spec-group" data-for="0"><h3>The row as a slider</h3><dl>
         <dt>Becomes</dt><dd>pill in place: press + drag sideways, click (while the pointer stays), sideways swipe</dd>
-        <dt>Pill</dt><dd>304 × 48, radius 24, #EEEEF1; dragging #E3E3E7</dd>
+        <dt>Pill</dt><dd>304 × 48, radius 24, #EEEEF1; dragging #E3E3E7; at the end of the range #D6D7DC</dd>
         <dt>Tape window</dt><dd>x 134–210, edge fade 14 %</dd>
         <dt>Dominoes</dt><dd>1 × 14 on a floor at y 31, one per 5</dd>
         <dt>Direction</dt><dd>right above 0, left below 0; chain ≤ 76°</dd>
@@ -447,13 +462,13 @@ body { margin: 0; background: var(--bg); color: var(--ink); font: 400 15px/1.4 v
       <div class="spec-group" data-for="0"><h3>Reset · compare</h3><dl>
         <dt>Row reset</dt><dd>32 × 32, right 8, only on the pill and only if edited; value slides 28 left</dd>
         <dt>Also</dt><dd>double-click a row, or Delete</dd>
-        <dt>Reset all</dt><dd>Geist 14, #62666D, shown only when edited; rows walk home 90 ms apart</dd>
+        <dt>Reset all</dt><dd>Geist 14, #62666D, shown only when edited; rows ease home 90 ms apart</dd>
         <dt>Compare</dt><dd>hold "Adjust": hint "Hold to compare" → "Original"; edited rows stand up 45 ms apart, back on release</dd>
       </dl></div>
       <div class="spec-group" data-for="0"><h3>Weight</h3><dl>
         <dt>Card tilt</dt><dd>3° · sign(m)·|m|^0.7, m = mean load; plus to the right</dd>
         <dt>Card sink</dt><dd>≤ 3, with the total edited</dd>
-        <dt>Back to level</dt><dd>edge lands: 35 % bounce, knock ≤ 1.2°, every number jolts</dd>
+        <dt>Back to level</dt><dd>loose balance, k 55, c 6: sways a little past level and settles; no knock</dd>
         <dt>Knock per domino</dt><dd>0.08–0.3°, 360 ms, one-sided</dd>
       </dl></div>
       <div class="spec-group" data-for="0"><h3>Input</h3><dl>
@@ -464,7 +479,7 @@ body { margin: 0; background: var(--bg); color: var(--ink); font: 400 15px/1.4 v
 
       <div class="spec-group" data-for="1"><h3>Well · rows</h3><dl>
         <dt>Well</dt><dd>304 × 220, radius 20, #EEEEF1 / #E8E8EC / #E3E3E7</dd>
-        <dt>Rows</dt><dd>44 tall; index Geist 14 / 20 tabular, name 16 / 24</dd>
+        <dt>Rows</dt><dd>44 tall; icon 16 (#62666D, current #17181B), name 16 / 24</dd>
         <dt>Current</dt><dd>#17181B; others #62666D</dd>
         <dt>Values</dt><dd>none (a picker can't change them)</dd>
         <dt>Counter</dt><dd>Geist 14 / 20 tabular "01 / 08"; reset icon back to the first</dd>
@@ -480,7 +495,7 @@ body { margin: 0; background: var(--bg); color: var(--ink); font: 400 15px/1.4 v
 
       <div class="spec-group" data-for="2"><h3>Viewport · pill</h3><dl>
         <dt>Viewport</dt><dd>304 × 220, 5 rows of 44, no fill</dd>
-        <dt>Pill</dt><dd>304 × 46, radius 23, at y 87: the reading position</dd>
+        <dt>Pill</dt><dd>304 × 46, radius 23: the reading position; walks down from the first row, list scrolls once it reaches the middle</dd>
         <dt>Fill</dt><dd>#EEEEF1 / hover #E8E8EC / drag #E3E3E7</dd>
         <dt>Row</dt><dd>icon 16 at 18, name at 46; no values</dd>
       </dl></div>
@@ -488,8 +503,8 @@ body { margin: 0; background: var(--bg); color: var(--ink); font: 400 15px/1.4 v
         <dt>Piece</dt><dd>the whole row, standing on its bottom edge</dd>
         <dt>Trigger</dt><dd>the pill's edge passes a row, in or out</dd>
         <dt>Pluck</dt><dd>rotateX, perspective 520, the way the list moves</dd>
-        <dt>Flick</dt><dd>420 + 70 × speed °/s (≤ 1100) ≈ 30–75°</dd>
-        <dt>Spring back</dt><dd>k 220, c 8: past upright and back, then still</dd>
+        <dt>Flick</dt><dd>560 + 70 × speed °/s (≤ 1100) ≈ 20–45°</dd>
+        <dt>Spring back</dt><dd>k 320, c 26: one small give past upright, then still</dd>
         <dt>Limit</dt><dd>78°, bounces off it</dd>
         <dt>Hover</dt><dd>light pluck of the row below the pill</dd>
         <dt>Pill knock</dt><dd>0.15–0.7° per row passed, by speed; dips on landing</dd>
@@ -499,6 +514,7 @@ body { margin: 0; background: var(--bg); color: var(--ink); font: 400 15px/1.4 v
         <dt>Well</dt><dd>304 × 220, radius 23, #EEEEF1 / #E8E8EC / #E3E3E7 (the rail, upright)</dd>
         <dt>Reader</dt><dd>1 px across at y 132, #17181B; still (the well takes the knocks)</dd>
         <dt>Rows</dt><dd>44 tall, name at 40; no values</dd>
+        <dt>Wheel</dt><dd>as v1: passed rows tip back (rotateX, perspective 520), front 37° → ≤ 78°, pile at cos θ, fade to 40 %</dd>
       </dl></div>
       <div class="spec-group" data-for="3"><h3>Tape</h3><dl>
         <dt>Dominoes</dt><dd>14 long, foot at x 14, four per row (every 11)</dd>
@@ -653,6 +669,7 @@ body { margin: 0; background: var(--bg); color: var(--ink); font: 400 15px/1.4 v
       resetB.style.transform = `scale(${(0.8 + 0.2 * r).toFixed(3)})`;
       win.style.opacity = vis.toFixed(3); rod.style.opacity = vis.toFixed(3);
       el.classList.toggle('drag', st.dragging && st.moved);
+      el.classList.toggle('limit', st.value <= MIN + 0.01 || st.value >= MAX - 0.01);
       if (vis > 0.005) {
         const W = winW();
         rod.style.left = (134 + W / 2) + 'px';
@@ -758,7 +775,6 @@ body { margin: 0; background: var(--bg); color: var(--ink); font: 400 15px/1.4 v
             if (Math.abs(st.value - st.target) < 0.02 && Math.abs(st.sv) < 0.5) {
               st.value = st.target; st.target = null; st.sv = 0;
               if (!REDUCE) st.digits.forEach((d) => { d.v -= rand(30, 60); });
-              if (st.value === HOME && !engaged() && !REDUCE) cardSt.dip.v += 2;
             }
           } else if (Math.abs(st.vel) > 2 && st.value >= MIN && st.value <= MAX) {
             st.value += st.vel * dt; st.vel *= Math.exp(-(3 + 9 * L) * dt);
@@ -1008,7 +1024,7 @@ body { margin: 0; background: var(--bg); color: var(--ink); font: 400 15px/1.4 v
 
   // Reset all: the edited rows stand back up one after another, top to bottom
   allBtn.addEventListener('click', () => {
-    rows.filter((r) => r.edited()).forEach((r, k) => setTimeout(() => r.walkHome(null, false), REDUCE ? 0 : k * 90 / speed));
+    rows.filter((r) => r.edited()).forEach((r, k) => setTimeout(() => r.goHome(), REDUCE ? 0 : k * 90 / speed));
   });
   // Compare: hold the title. Edited rows stand up one after another (45 ms apart); let go and they fall back.
   const cmpBtn = document.getElementById('cmp'), hint = document.getElementById('cmp-hint');
@@ -1030,7 +1046,10 @@ body { margin: 0; background: var(--bg); color: var(--ink); font: 400 15px/1.4 v
     // the whole row over, top to bottom (rotateX, the way the list is moving), and the row springs back up, past
     // upright and back, until it stands still. Harder and further the faster the list runs. Nothing stays down.
     const ITEMS = [['Exposure', 12], ['Contrast', 0], ['Highlights', -30], ['Shadows', 18], ['Saturation', 0], ['Warmth', 0], ['Sharpness', 0], ['Grain', 40]];
-    const N = ITEMS.length, RH = 44, SLOT = 88;
+    const N = ITEMS.length, RH = 44, VIS = 5;
+    // No empty space at the top: the list starts at the first row and the pill walks down with the selection;
+    // from the middle row on the list scrolls under it instead, and near the end the pill walks on to the last row.
+    const off = () => clamp(st.p.x - 2, 0, N - VIS);
     const box = document.getElementById('pk'), pill = document.getElementById('pk-pill'), rowsBox = document.getElementById('pk-rows'), card2 = document.getElementById('card2');
     const rows = ITEMS.map(([n, v], i) => {
       const el = document.createElement('div'); el.className = 'pk-row'; el.id = 'pk-' + i; el.setAttribute('role', 'option');
@@ -1063,7 +1082,7 @@ body { margin: 0; background: var(--bg); color: var(--ink); font: 400 15px/1.4 v
     });
     const up = (e) => {
       if (!st.drag) return; st.drag = false; box.classList.remove('drag');
-      if (!st.moved) { const r = box.getBoundingClientRect(); st.target = clamp(Math.round((e.clientY - r.top - SLOT - RH / 2) / RH + st.p.x), 0, N - 1); st.p.v = 0; }
+      if (!st.moved) { const r = box.getBoundingClientRect(); st.target = clamp(Math.floor((e.clientY - r.top) / RH + off()), 0, N - 1); st.p.v = 0; }
       else {
         if (performance.now() - st.lastT > 80) st.vel = 0;
         st.target = clamp(Math.round(st.p.x + clamp(st.vel, -14, 14) * 0.17), 0, N - 1);
@@ -1080,14 +1099,14 @@ body { margin: 0; background: var(--bg); color: var(--ink); font: 400 15px/1.4 v
     function pluck(r, dir, kick) { r.v += dir * Math.min(1100, kick); }
     function step(dt) {
       st.time += dt;
-      if (!st.drag && !st.wheel) sp(st.p, st.target, 170, 20, dt);
+      if (!st.drag && !st.wheel) sp(st.p, st.target, 170, 27, dt);
       st.pv += ((st.p.x - st.prevP) / Math.max(dt, 1e-4) - st.pv) * Math.min(1, dt * 30); st.prevP = st.p.x;
       st.peak = Math.max(st.peak * Math.exp(-2 * dt), Math.abs(st.pv));
       rows.forEach((r, i) => {
         const inside = Math.abs(st.p.x - i) < 0.5;
-        if (inside !== r.inside) { r.inside = inside; pluck(r, Math.sign(st.pv) || 1, 420 + 70 * clamp(Math.abs(st.pv), 0.6, 10)); }
+        if (inside !== r.inside) { r.inside = inside; pluck(r, Math.sign(st.pv) || 1, 560 + 70 * clamp(Math.abs(st.pv), 0.6, 10)); }
         if (REDUCE) { r.a = 0; r.v = 0; return; }
-        r.v += (-220 * r.a - 8 * r.v) * dt; r.a += r.v * dt;            // springy: overshoots and wobbles back upright
+        r.v += (-320 * r.a - 26 * r.v) * dt; r.a += r.v * dt;           // firm: goes over, comes back with one small give, done
         if (Math.abs(r.a) > 78) { r.a = Math.sign(r.a) * 78; r.v *= -0.3; } // never past lying flat
       });
       // a row going over (or standing back up) knocks the pill, harder the faster the list runs
@@ -1113,13 +1132,13 @@ body { margin: 0; background: var(--bg); color: var(--ink); font: 400 15px/1.4 v
       for (let i = 0; i < n; i++) step(dt / n);
       const P = st.p.x, c = cur();
       rows.forEach((r, i) => {
-        r.el.style.transform = `translateY(${(SLOT + (i - P) * RH).toFixed(2)}px)` + (Math.abs(r.a) > 0.05 ? ` rotateX(${r.a.toFixed(2)}deg)` : '');
+        r.el.style.transform = `translateY(${((i - off()) * RH).toFixed(2)}px)` + (Math.abs(r.a) > 0.05 ? ` rotateX(${r.a.toFixed(2)}deg)` : '');
         r.el.classList.toggle('now', i === c); r.el.setAttribute('aria-selected', String(i === c));
         r.digits.forEach((d) => { d.el.style.transform = Math.abs(d.x) > 0.05 ? `translateY(${d.x.toFixed(2)}px)` : ''; });
       });
       box.setAttribute('aria-activedescendant', 'pk-' + c);
       const kn = st.knock ? st.knock.dir * st.knock.amp * kShape(st.knock.ms / KMS) / kNorm : 0;
-      pill.style.transform = `translateY(${st.dip.x.toFixed(2)}px) rotate(${kn.toFixed(3)}deg)`;
+      pill.style.transform = `translateY(${((P - off()) * RH - 88 + st.dip.x).toFixed(2)}px) rotate(${kn.toFixed(3)}deg)`;   // CSS puts it at y 87
       card2.style.transform = `translateY(${st.cdip.x.toFixed(2)}px)`;
     }
     return { tick };
@@ -1139,7 +1158,7 @@ body { margin: 0; background: var(--bg); color: var(--ink); font: 400 15px/1.4 v
       el.innerHTML = `<span class="nm">${n}</span><span class="vl"></span>`;
       rowsBox.append(el);
       const vl = el.querySelector('.vl'), digits = [...fmt(v)].map((ch) => { const s = document.createElement('span'); s.className = 'd'; s.textContent = ch; vl.append(s); return { el: s, x: 0, v: 0 }; });
-      return { el, digits, w: Math.abs(v) / 100 };
+      return { el, digits, w: Math.abs(v) / 100, ang: { x: 0, v: 0 } };
     });
     // the upright tape: one domino every 6.65 px from the first row's centre to the last's; its foot on the left edge
     const svg = mk('svg', { class: 'pk-tape', width: 40, height: 220 }, box); box.append(document.getElementById('pk3-line'));
@@ -1149,6 +1168,7 @@ body { margin: 0; background: var(--bg); color: var(--ink); font: 400 15px/1.4 v
     const st = { p: { x: 0, v: 0 }, prevP: 0, pv: 0, target: 0, drag: false, moved: false, y0: 0, p0: 0, lastY: 0, lastT: 0, vel: 0, wheel: false,
       nF: 0, peak: 0, settled: true, knock: null, dip: { x: 0, v: 0 }, cdip: { x: 0, v: 0 }, last: 0 };
     const cur = () => clamp(Math.round(st.p.x), 0, N - 1);
+    const WCH = [0]; for (let k = 1; k <= N + 1; k++) WCH.push(Math.min(78, WCH[k - 1] + deg(Math.asin(0.6 * Math.cos(rad(WCH[k - 1]))))));
     const lineY = () => st.p.x * RH + RH;                // where the line is, in tape coordinates
     // like the slider: everything the line has reached is down, the selected row's own dominoes included
     const front = () => lineY();
@@ -1218,6 +1238,19 @@ body { margin: 0; background: var(--bg); color: var(--ink); font: 400 15px/1.4 v
         st.peak = 0;
       }
       rows.forEach((r) => r.digits.forEach((d) => sp(d, 0, 520, 16, dt)));
+      // the wheel (v1's): rows the line has passed tip back on their bottom edge, each resting on the one in front
+      { const P = st.p.x, base = Math.floor(P), frac = P - base;
+        rows.forEach((r, i) => {
+          const k = base - i;
+          // standing rows lean with the run (they're dragged along and lag behind it); fallen ones lie on the pile
+          let T = k >= 0 ? WCH[k] + (WCH[k + 1] - WCH[k]) * clamp(frac, 0, 1) : clamp(st.pv * 3.5, -14, 14);
+          if (REDUCE) { r.ang.x = T; r.ang.v = 0; return; }
+          if (k >= 0 && T > r.ang.x + 0.5) {
+            // going over: gravity takes it, faster the further it's gone; it lands on the pile and bounces once
+            r.ang.v = Math.max(r.ang.v, 40) + 2400 * (0.2 + Math.sin(rad(clamp(r.ang.x, 0, 85)))) * dt; r.ang.x += r.ang.v * dt;
+            if (r.ang.x >= T) { r.ang.x = T; if (r.ang.v > 120) { const hit = r.ang.v; r.ang.v *= -0.3; st.dip.v += Math.min(5, hit * 0.006); st.knock = { ms: 0, dir: 1, amp: clamp(hit * 0.0006, 0.1, 0.5) }; } else r.ang.v = 0; }
+          } else { r.ang.v += (-420 * (r.ang.x - T) - 22 * r.ang.v) * dt; r.ang.x += r.ang.v * dt; }   // stood back up: a little past, then still
+        }); }
       sp(st.dip, 0, 300, 16, dt);
       sp(st.cdip, clamp(st.p.x / (N - 1), 0, 1) * 1.5, 200, 16, dt);   // dominoes fall downward here: the card sinks, it doesn't tip
     }
@@ -1225,8 +1258,14 @@ body { margin: 0; background: var(--bg); color: var(--ink); font: 400 15px/1.4 v
       const n = Math.max(1, Math.ceil(dt / (1 / 240)));
       for (let i = 0; i < n; i++) step(dt / n);
       const P = st.p.x, c = cur();
+      // standing rows keep their 44 slots; fallen ones pile up above, each taking only cos θ of its height
+      const base = Math.floor(P), ys = new Array(N);
+      for (let i = Math.max(0, base); i < N; i++) ys[i] = SLOT + (i - P) * RH;
+      for (let i = Math.min(N - 1, base) - 1; i >= 0; i--) ys[i] = ys[i + 1] - RH * Math.max(0.2, Math.cos(rad(clamp(rows[i + 1].ang.x, 0, 85))));
       rows.forEach((r, i) => {
-        r.el.style.transform = `translateY(${(SLOT + (i - P) * RH).toFixed(2)}px)`;
+        const wa = clamp(r.ang.x, -10, 85);
+        r.el.style.transform = `translateY(${ys[i].toFixed(2)}px) rotateX(${wa.toFixed(2)}deg)`;
+        r.el.style.opacity = (1 - 0.6 * clamp(wa / 76, 0, 1)).toFixed(3);
         r.el.classList.toggle('now', i === c); r.el.setAttribute('aria-selected', String(i === c));
         r.digits.forEach((d) => { d.el.style.transform = Math.abs(d.x) > 0.05 ? `translateY(${d.x.toFixed(2)}px)` : ''; });
       });
@@ -1256,24 +1295,10 @@ body { margin: 0; background: var(--bg); color: var(--ink); font: 400 15px/1.4 v
     const tilt = held;
     for (let i = 0; i < n; i++) {
       const h = dt / n, was = cardSt.rot.x;
+      // the card follows the weight on it like a loose balance: it eases over and, as the weight comes off, sways
+      // back past level a little and settles. No stops, no knocks.
       if (REDUCE) { cardSt.rot.x = tilt; cardSt.rot.v = 0; }
-      else {
-        // loading, it leans over slowly; unloading, nothing holds it up: it falls back briskly, barely damped
-        const unload = Math.abs(cardSt.rot.x) > Math.abs(tilt) + 0.05 && Math.sign(cardSt.rot.x) !== -Math.sign(tilt);
-        const k = unload ? 90 : 60, c = unload ? 1.5 : 9;
-        cardSt.rot.v += (-k * (cardSt.rot.x - tilt) - c * cardSt.rot.v) * h; cardSt.rot.x += cardSt.rot.v * h;
-      }
-      // Coming back to level (the weight's gone), the raised edge drops onto the table: it can't swing through.
-      // It lands, bounces back a little (35%), and the landing runs through the card as a knock, sized by how hard.
-      if (!REDUCE && Math.sign(tilt) !== Math.sign(was) && was * cardSt.rot.x < 0) {   // passing level toward a side with no weight on it
-        const imp = Math.abs(cardSt.rot.v);
-        cardSt.rot.x = 0; cardSt.rot.v *= -0.35;
-        if (imp > 1.5) {
-          cardSt.knock = { ms: 0, side: -Math.sign(was), amp: clamp(imp * 0.14, 0.25, 1.2) };
-          cardSt.dip.v += imp * 1.2;
-          rows.forEach((r) => r.bump(clamp(imp / 8, 0.3, 1.2)));
-        }
-      }
+      else { cardSt.rot.v += (-55 * (cardSt.rot.x - tilt) - 6 * cardSt.rot.v) * h; cardSt.rot.x += cardSt.rot.v * h; }
       sp(cardSt.dip, mag * 3, 200, 16, h);
       if (cardSt.knock) { cardSt.knock.ms += h * 1000; if (cardSt.knock.ms >= KMS) cardSt.knock = null; }
     }
