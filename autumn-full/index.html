@@ -247,7 +247,7 @@ const SIDES = [
   { id: 'brown', label: 'Side C', title: 'Bronze',  items: GROUPS[2].items },
 ];
 const ORDER = SIDES.flatMap(s => s.items);
-const open = { red: true };
+const open = {};                      /* opens on the closed cover, where the wind blows */
 const sleeve = document.getElementById('sleeve'), giant = document.getElementById('giant'),
       print = document.getElementById('print'), detail = document.getElementById('detail');
 const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
