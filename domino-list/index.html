@@ -164,6 +164,7 @@ html.pointer-mode .arow:focus-visible, html.pointer-mode .pk:focus-visible, html
 .pk3:focus-visible { box-shadow: 0 0 0 2px var(--card), 0 0 0 4px var(--ink); }
 #pk3 { perspective: 520px; }
 #pk3 .pk-row { transform-origin: 50% 100%; }
+#pk3 .pk-row .pk-tape { position: absolute; left: 0; top: 0; overflow: visible; }
 .pk3-line { position: absolute; left: 0; right: 0; top: 132px; height: 1px; margin-top: -0.5px; background: var(--ink); pointer-events: none; }
 .controls { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 10px 8px; padding: 0 16px 28px; }
 .btn { appearance: none; height: 42px; padding: 0 16px; border: 0; border-radius: 999px; background: var(--card); box-shadow: inset 0 0 0 1px var(--line); color: var(--ink); font: 400 14px/1 var(--sans); cursor: pointer; }
@@ -178,7 +179,7 @@ html.pointer-mode .arow:focus-visible, html.pointer-mode .pk:focus-visible, html
   <div class="stage" id="stage" aria-roledescription="carousel">
     <button class="nav prev" type="button" id="prev" aria-label="Previous"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button>
     <div class="track" id="track">
-      <div class="slide" aria-roledescription="slide" aria-label="1 of 4">
+      <div class="slide" aria-roledescription="slide" aria-label="1 of 3">
   <div class="demo">
     <p class="group-label">Dominoes List</p>
     <div class="list" id="card">
@@ -190,7 +191,7 @@ html.pointer-mode .arow:focus-visible, html.pointer-mode .pk:focus-visible, html
     </div>
   </div>
       </div>
-      <div class="slide" aria-roledescription="slide" aria-label="2 of 4">
+      <div class="slide" aria-roledescription="slide" aria-label="2 of 3">
   <div class="demo">
     <p class="group-label">Dominoes List · v1</p>
     <iframe class="v1" id="v1" title="Dominoes List v1" srcdoc="&lt;!doctype html&gt;
@@ -388,18 +389,9 @@ body { margin: 0; background: var(--bg); color: var(--ink); font: 400 15px/1.4 v
 "></iframe>
   </div>
       </div>
-      <div class="slide" aria-roledescription="slide" aria-label="3 of 4">
+      <div class="slide" aria-roledescription="slide" aria-label="3 of 3">
   <div class="demo">
     <p class="group-label">Dominoes List · v2</p>
-    <div class="list" id="card2">
-      <div class="lhead"><h2 class="ltitle" id="pk-label">Adjust</h2></div>
-      <div class="pk" id="pk" tabindex="0" role="listbox" aria-labelledby="pk-label"><span class="pk-pill" id="pk-pill"></span><div class="pk-rows" id="pk-rows"></div></div>
-    </div>
-  </div>
-      </div>
-      <div class="slide" aria-roledescription="slide" aria-label="4 of 4">
-  <div class="demo">
-    <p class="group-label">Dominoes List · v3</p>
     <div class="list" id="card3">
       <div class="lhead"><h2 class="ltitle" id="pk3-label">Adjust</h2></div>
       <div class="pk3" id="pk3" tabindex="0" role="listbox" aria-labelledby="pk3-label"><div class="pk-rows" id="pk3-rows"></div><span class="pk3-line" id="pk3-line" aria-hidden="true"></span></div>
@@ -493,30 +485,16 @@ body { margin: 0; background: var(--bg); color: var(--ink); font: 400 15px/1.4 v
         <dt>Knock</dt><dd>line ≤ 3 px, card dips with each row; sinks ≤ 3 with progress</dd>
       </dl></div>
 
-      <div class="spec-group" data-for="2"><h3>Viewport · pill</h3><dl>
-        <dt>Viewport</dt><dd>304 × 220, 5 rows of 44, no fill</dd>
-        <dt>Pill</dt><dd>304 × 46, radius 23: the reading position; walks down from the first row, list scrolls once it reaches the middle</dd>
-        <dt>Fill</dt><dd>#EEEEF1 / hover #E8E8EC / drag #E3E3E7</dd>
-        <dt>Row</dt><dd>icon 16 at 18, name at 46; no values</dd>
-      </dl></div>
-      <div class="spec-group" data-for="2"><h3>Pluck</h3><dl>
-        <dt>Piece</dt><dd>the whole row, standing on its bottom edge</dd>
-        <dt>Trigger</dt><dd>the pill's edge passes a row, in or out</dd>
-        <dt>Pluck</dt><dd>rotateX, perspective 520, the way the list moves</dd>
-        <dt>Flick</dt><dd>560 + 70 × speed °/s (≤ 1100) ≈ 20–45°</dd>
-        <dt>Spring back</dt><dd>k 320, c 26: one small give past upright, then still</dd>
-        <dt>Limit</dt><dd>78°, bounces off it</dd>
-        <dt>Hover</dt><dd>light pluck of the row below the pill</dd>
-        <dt>Pill knock</dt><dd>0.15–0.7° per row passed, by speed; dips on landing</dd>
-      </dl></div>
+      
+      
 
-      <div class="spec-group" data-for="3"><h3>Well · reader</h3><dl>
+      <div class="spec-group" data-for="2"><h3>Well · reader</h3><dl>
         <dt>Well</dt><dd>304 × 220, radius 23, #EEEEF1 / #E8E8EC / #E3E3E7 (the rail, upright)</dd>
         <dt>Reader</dt><dd>1 px across at y 132, #17181B; still (the well takes the knocks)</dd>
         <dt>Rows</dt><dd>44 tall, name at 40; no values</dd>
         <dt>Wheel</dt><dd>as v1: passed rows tip back (rotateX, perspective 520), front 37° → ≤ 78°, pile at cos θ, fade to 40 %</dd>
       </dl></div>
-      <div class="spec-group" data-for="3"><h3>Tape</h3><dl>
+      <div class="spec-group" data-for="2"><h3>Tape</h3><dl>
         <dt>Dominoes</dt><dd>14 long, foot at x 14, four per row (every 11)</dd>
         <dt>Standing</dt><dd>across, #B9BCC2, stroke 1</dd>
         <dt>Above the line</dt><dd>down, #62666D, stroke 1.25; front 35°, ≤ 76°</dd>
@@ -1042,9 +1020,10 @@ body { margin: 0; background: var(--bg); color: var(--ink); font: 400 15px/1.4 v
 
   // ---- v2: picker list, same parts as the slider. The slider's tape, turned upright, runs down the left edge. ----
   function makePicker() {
-    // v2: each row is a domino standing on its bottom edge. When the pill's edge passes a row (in or out) it plucks
-    // the whole row over, top to bottom (rotateX, the way the list is moving), and the row springs back up, past
-    // upright and back, until it stands still. Harder and further the faster the list runs. Nothing stays down.
+    // v2: the whole list is a row of dominoes. When the pill reaches a row it plucks it over (rotateX, the way the
+    // list is moving); as that row goes over it knocks the next one ahead, which knocks the next: a wave runs on
+    // down (or up) the list, each row hit a little softer (× 0.72) until it dies out. A harder flick sends it further.
+    // Every row springs back upright; nothing stays down, the words stay readable.
     const ITEMS = [['Exposure', 12], ['Contrast', 0], ['Highlights', -30], ['Shadows', 18], ['Saturation', 0], ['Warmth', 0], ['Sharpness', 0], ['Grain', 40]];
     const N = ITEMS.length, RH = 44, VIS = 5;
     // No empty space at the top: the list starts at the first row and the pill walks down with the selection;
@@ -1059,7 +1038,7 @@ body { margin: 0; background: var(--bg); color: var(--ink); font: 400 15px/1.4 v
       const letters = [...n].map((ch) => { const s = document.createElement('span'); s.className = 'lt'; s.textContent = ch; s.setAttribute('aria-hidden', 'true'); nm.append(s); return s; });
       const pieces = [el.querySelector('.ico'), ...letters].map((p) => ({ el: p, a: 0, v: 0, at: 0, kick: 0 }));
       const vl = el.querySelector('.vl'), digits = [...fmt(v)].map((ch) => { const s = document.createElement('span'); s.className = 'd'; s.textContent = ch; vl.append(s); return { el: s, x: 0, v: 0 }; });
-      return { el, digits, pieces, w: Math.abs(v) / 100, inside: i === 0, a: 0, v: 0 };
+      return { el, digits, pieces, w: Math.abs(v) / 100, inside: i === 0, a: 0, v: 0, wave: null };
     });
     const st = { p: { x: 0, v: 0 }, prevP: 0, pv: 0, target: 0, drag: false, moved: false, y0: 0, p0: 0, lastY: 0, lastT: 0, vel: 0, wheel: false,
       nF: 0, peak: 0, settled: true, time: 0, knock: null, dip: { x: 0, v: 0 }, cdip: { x: 0, v: 0 } };
@@ -1096,7 +1075,11 @@ body { margin: 0; background: var(--bg); color: var(--ink); font: 400 15px/1.4 v
       let t = null; if (e.key === 'ArrowDown') t = st.target + 1; else if (e.key === 'ArrowUp') t = st.target - 1; else if (e.key === 'Home') t = 0; else if (e.key === 'End') t = N - 1;
       if (t == null) return; e.preventDefault(); st.target = clamp(t, 0, N - 1); st.settled = false;
     });
-    function pluck(r, dir, kick) { r.v += dir * Math.min(1100, kick); }
+    let waveId = 0;
+    function pluck(r, dir, kick, wave) {
+      kick = Math.min(1100, kick); r.v += dir * kick;
+      if (wave) r.wave = { id: ++waveId, dir, kick, sent: false };
+    }
     function step(dt) {
       st.time += dt;
       if (!st.drag && !st.wheel) sp(st.p, st.target, 170, 27, dt);
@@ -1104,7 +1087,17 @@ body { margin: 0; background: var(--bg); color: var(--ink); font: 400 15px/1.4 v
       st.peak = Math.max(st.peak * Math.exp(-2 * dt), Math.abs(st.pv));
       rows.forEach((r, i) => {
         const inside = Math.abs(st.p.x - i) < 0.5;
-        if (inside !== r.inside) { r.inside = inside; pluck(r, Math.sign(st.pv) || 1, 560 + 70 * clamp(Math.abs(st.pv), 0.6, 10)); }
+        if (inside !== r.inside) {
+          r.inside = inside;
+          // the row the pill arrives at starts a wave ahead of it; the row it leaves only gets a light push
+          pluck(r, Math.sign(st.pv) || 1, inside ? 560 + 70 * clamp(Math.abs(st.pv), 0.6, 10) : 260, inside);
+        }
+        // a row going over hits its neighbour ahead once it has tipped far enough to reach it (8°)
+        if (r.wave && !r.wave.sent && Math.abs(r.a) > 8) {
+          r.wave.sent = true;
+          const nx = rows[i + r.wave.dir], k2 = r.wave.kick * 0.82;
+          if (nx && k2 > 110 && (!nx.wave || nx.wave.id !== r.wave.id)) { nx.v += r.wave.dir * k2; nx.wave = { id: r.wave.id, dir: r.wave.dir, kick: k2, sent: false }; }
+        }
         if (REDUCE) { r.a = 0; r.v = 0; return; }
         r.v += (-320 * r.a - 26 * r.v) * dt; r.a += r.v * dt;           // firm: goes over, comes back with one small give, done
         if (Math.abs(r.a) > 78) { r.a = Math.sign(r.a) * 78; r.v *= -0.3; } // never past lying flat
@@ -1143,7 +1136,6 @@ body { margin: 0; background: var(--bg); color: var(--ink); font: 400 15px/1.4 v
     }
     return { tick };
   }
-  const picker = makePicker();
 
 
   // ---- v3: v1's structure in the slider's parts. The grey well is the rail (the slider's pill, upright), the line
@@ -1160,11 +1152,14 @@ body { margin: 0; background: var(--bg); color: var(--ink); font: 400 15px/1.4 v
       const vl = el.querySelector('.vl'), digits = [...fmt(v)].map((ch) => { const s = document.createElement('span'); s.className = 'd'; s.textContent = ch; vl.append(s); return { el: s, x: 0, v: 0 }; });
       return { el, digits, w: Math.abs(v) / 100, ang: { x: 0, v: 0 } };
     });
-    // the upright tape: one domino every 6.65 px from the first row's centre to the last's; its foot on the left edge
-    const svg = mk('svg', { class: 'pk-tape', width: 40, height: 220 }, box); box.append(document.getElementById('pk3-line'));
-    const tapeG = mk('g', {}, svg);
+    // The tape is the same (four dominoes a row, falling down onto each other), but each row carries its own four:
+    // they're drawn in the row's plane, so when the row tips back like the text, its dominoes tip back with it.
+    box.append(document.getElementById('pk3-line'));
     const ticks = [];
-    for (let y = SPV / 2; y < N * RH; y += SPV) ticks.push({ y, i: ticks.length, a: 0, v: 0, l: mk('line', { class: 'tk', x1: X0, x2: X0 + HV, y1: y, y2: y }, tapeG) });
+    rows.forEach((r, ri) => {
+      const rs = mk('svg', { class: 'pk-tape', width: 40, height: RH }, r.el);
+      for (let j = 0; j < 4; j++) { const ly = SPV / 2 + j * SPV; ticks.push({ y: ri * RH + ly, ly, i: ticks.length, a: 0, v: 0, l: mk('line', { class: 'tk', x1: X0, x2: X0 + HV, y1: ly, y2: ly }, rs) }); }
+    });
     const st = { p: { x: 0, v: 0 }, prevP: 0, pv: 0, target: 0, drag: false, moved: false, y0: 0, p0: 0, lastY: 0, lastT: 0, vel: 0, wheel: false,
       nF: 0, peak: 0, settled: true, knock: null, dip: { x: 0, v: 0 }, cdip: { x: 0, v: 0 }, last: 0 };
     const cur = () => clamp(Math.round(st.p.x), 0, N - 1);
@@ -1269,10 +1264,9 @@ body { margin: 0; background: var(--bg); color: var(--ink); font: 400 15px/1.4 v
         r.el.classList.toggle('now', i === c); r.el.setAttribute('aria-selected', String(i === c));
         r.digits.forEach((d) => { d.el.style.transform = Math.abs(d.x) > 0.05 ? `translateY(${d.x.toFixed(2)}px)` : ''; });
       });
-      tapeG.setAttribute('transform', `translate(0 ${(MIDY - lineY()).toFixed(2)})`);
       for (const t of ticks) {
         t.l.classList.toggle('on', t.a > 1);
-        t.l.setAttribute('transform', t.a > 0.05 ? `rotate(${t.a.toFixed(2)} ${X0} ${t.y.toFixed(2)})` : '');
+        t.l.setAttribute('transform', t.a > 0.05 ? `rotate(${t.a.toFixed(2)} ${X0} ${t.ly.toFixed(2)})` : '');
       }
       box.setAttribute('aria-activedescendant', 'pk3-' + c);
       const kn = st.knock ? st.knock.dir * st.knock.amp * kShape(st.knock.ms / KMS) / kNorm : 0;
@@ -1286,7 +1280,7 @@ body { margin: 0; background: var(--bg); color: var(--ink); font: 400 15px/1.4 v
   let last = performance.now();
   function frame(now) {
     const dt = Math.min(0.05, (now - last) / 1000) * speed; last = now;
-    rows.forEach((r) => r.tick(dt)); picker.tick(dt); picker3.tick(dt);
+    rows.forEach((r) => r.tick(dt)); picker3.tick(dt);
     // the card carries every row's pile: it tips toward the side more of them fell, sinks a trace with how much is edited
     const sum = rows.reduce((a, r) => a + r.load(), 0), mag = rows.reduce((a, r) => a + Math.abs(r.load()), 0) / rows.length;
     const n = Math.max(1, Math.ceil(dt / (1 / 240)));
