@@ -145,6 +145,9 @@
   :root { --page: #f6f6f6; --c-card: #ffffff; --c-ink: #17181b; --c-muted: #62666d; --c-line: #dfe0e4; --c-press: #eeeef1;
     --sans: "Geist", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; --mono-ui: "Geist Mono", ui-monospace, "SF Mono", Menlo, monospace; }
   @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --page: #0f1012; --c-card: #202226; --c-ink: #eeeff1; --c-muted: #9a9ea5; --c-line: #2a2c31; --c-press: #2c2f34; color-scheme: dark; } }
+  /* on a dark page the card loses its light top highlight and casts a plain black shadow, so no pale rim shows around it */
+  :root[data-theme="dark"] .sleeve { box-shadow: 0 24px 60px -28px rgba(0, 0, 0, .75); }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .sleeve { box-shadow: 0 24px 60px -28px rgba(0, 0, 0, .75); } }
   :root[data-theme="dark"] { --page: #0f1012; --c-card: #202226; --c-ink: #eeeff1; --c-muted: #9a9ea5; --c-line: #2a2c31; --c-press: #2c2f34; color-scheme: dark; }
   body { display: block; padding: 0; }
   .page { min-height: 100vh; min-height: 100dvh; display: flex; flex-direction: column; }
@@ -186,11 +189,12 @@
 </div>
   <div class="controls">
     <label class="btn check" for="slow"><input type="checkbox" id="slow"> Slow motion</label>
+    <label class="btn check" for="dark"><input type="checkbox" id="dark"> Dark mode</label>
     <button class="btn" type="button" id="spec-btn" aria-expanded="false" aria-controls="spec">Spec</button>
   </div>
   <section class="spec" id="spec" aria-labelledby="spec-title" hidden>
     <div class="spec-head"><h2 id="spec-title">Spec</h2><span>px at 1× · Autumn · Full bleed</span><button class="spec-close" type="button" id="spec-close" aria-label="Close spec">Close</button></div>
-    <div class="spec-grid"><div class="spec-group"><h3>Card</h3><dl><dt>Size</dt><dd>400 × 600 (2:3), max</dd><dt>Radius</dt><dd>12</dd><dt>Padding</dt><dd>22 22 18 (list) · 14 22 26 (detail)</dd><dt>Columns</dt><dd>40 % · 1fr, gap 10</dd><dt>Shadow</dt><dd>0 20 50 -24 · 45 %</dd><dt>Page</dt><dd><i style="background:#f6f6f6"></i>#F6F6F6</dd></dl></div><div class="spec-group"><h3>Masthead</h3><dl><dt>Text</dt><dd>“Autumn” · Newsreader Italic 60 / 60, −0.015em</dd><dt>Hover</dt><dd>each letter swings 6–10°, tint, 1.4 s</dd><dt>Motion</dt><dd>fades only; never gusts</dd></dl></div><div class="spec-group"><h3>Group row · expands</h3><dl><dt>Height</dt><dd>44 min, 6 between</dd><dt>Left slot</dt><dd>none</dd><dt>Line 1</dt><dd>Newsreader Italic 21 / 28</dd><dt>Right slot</dt><dd>icon 14: chevron › → minus when open</dd><dt>Enabled</dt><dd>chevron 42°</dd><dt>Hover</dt><dd>chevron 52°, +2 x · theme switches</dd><dt>Pressed</dt><dd>icon scale 0.8</dd><dt>Expanded</dt><dd>bars flatten to 12 wide · one group open at a time</dd></dl></div><div class="spec-group"><h3>Leaf row · goes deeper</h3><dl><dt>Grid</dt><dd>26 · 1fr · 14, gap 10</dd><dt>Left slot</dt><dd>number, Newsreader 12 old-style tabular, 80 %</dd><dt>Line 1</dt><dd>Newsreader Regular 16 / 28, one line</dd><dt>Right slot</dt><dd>chevron 12, stroke 1.5, shows on hover</dd><dt>Hover</dt><dd>1 px rule draws in 0.3 s · others 45 % · giant leaf cuts to this one</dd><dt>Pressed</dt><dd>name 1 px down</dd><dt>Focus</dt><dd>1.5 outline, 2 offset</dd></dl></div><div class="spec-group"><h3>Detail</h3><dl><dt>Back</dt><dd>Newsreader 14 / 20, 80 % → 100 %, chevron 11 slides 3</dd><dt>Name</dt><dd>Newsreader Italic 52 / 1.02, max 9ch</dd><dt>Note</dt><dd>Newsreader 15 / 22, 60 % wide, bottom right</dd><dt>Exit</dt><dd>Back or Esc</dd></dl></div><div class="spec-group"><h3>Themes · Crimson</h3><dl><dt>Ground</dt><dd><i style="background:#62331B"></i>#62331B</dd><dt>Leaf</dt><dd><i style="background:#C55129"></i>#C55129</dd><dt>Text</dt><dd><i style="background:#F9EAD6"></i>#F9EAD6</dd><dt>Tints</dt><dd><i style="background:#FF9A5C"></i>#FF9A5C <i style="background:#FFB347"></i>#FFB347 <i style="background:#FFBE55"></i>#FFBE55</dd></dl></div><div class="spec-group"><h3>Themes · Golden</h3><dl><dt>Ground</dt><dd><i style="background:#BF9B6B"></i>#BF9B6B</dd><dt>Leaf</dt><dd><i style="background:#F1CC82"></i>#F1CC82</dd><dt>Text</dt><dd><i style="background:#2E1806"></i>#2E1806</dd><dt>Tints</dt><dd><i style="background:#685000"></i>#685000 <i style="background:#6E5200"></i>#6E5200 <i style="background:#735A08"></i>#735A08</dd></dl></div><div class="spec-group"><h3>Themes · Bronze</h3><dl><dt>Ground</dt><dd><i style="background:#605407"></i>#605407</dd><dt>Leaf</dt><dd><i style="background:#391E03"></i>#391E03</dd><dt>Text</dt><dd><i style="background:#E7DACB"></i>#E7DACB</dd><dt>Tints</dt><dd><i style="background:#EDE6C0"></i>#EDE6C0 <i style="background:#D6CB8F"></i>#D6CB8F <i style="background:#C9BC74"></i>#C9BC74</dd></dl></div><div class="spec-group"><h3>Giant leaf</h3><dl><dt>Frame</dt><dd>x −20 %, y 6 %, 130 × 104 % (full bleed)</dd><dt>Swap</dt><dd>hard cut on hover, no scaling</dd><dt>Sway</dt><dd>spring k 14 · damping 2.2, bends from the stem</dd><dt>Range</dt><dd>still while a group is open · ~0.3° calm, ~2° in a gust</dd></dl></div><div class="spec-group"><h3>Wind</h3><dl><dt>Direction</dt><dd>random per visit, ±20° per gust</dd><dt>Breeze</dt><dd>cover (all groups closed) and leaf page, every 6–10 s, crosses card in 1.3 s</dd><dt>Lean</dt><dd>small text 9–15° · titles 3–5°</dd><dt>Riders</dt><dd>1–3 mid-word letters lift 9–15 px, 2.4–2.9 s</dd></dl></div><div class="spec-group"><h3>Flutter · hover</h3><dl><dt>Swing</dt><dd>14–22° small · 6–10° titles, damped</dd><dt>Duration</dt><dd>1.4 s, ease-out</dd><dt>Color</dt><dd>text → random theme tint → text</dd><dt>Direction</dt><dd>downwind first</dd></dl></div><div class="spec-group"><h3>Gusts · expand / page</h3><dl><dt>In</dt><dd>drift 12–30 px, ±40°, 0.8–1.15 s, rows +80 ms</dd><dt>Out</dt><dd>blow 30–90 px, spin 60–200°, 0.52–0.82 s</dd><dt>Hand-off</dt><dd>next page starts at 45 % of the gust</dd><dt>Guard</dt><dd>hover swap waits for letters to land; clicks queue</dd></dl></div><div class="spec-group"><h3>Flying letters</h3><dl><dt>Count</dt><dd>cover and leaf page, 4 at a time, Newsreader Italic 15–28</dd><dt>Fall</dt><dd>80–130 px/s, glide 50–95, swing 2.4–3.6 rad/s</dd><dt>Landing</dt><dd>every 8–13 s on a matching letter; original blows away</dd><dt>Color</dt><dd>theme tint, fades into the text over 6 s</dd></dl></div><div class="spec-group"><h3>Accessibility</h3><dl><dt>Keyboard</dt><dd>Tab rows, Enter opens, Esc back</dd><dt>Focus</dt><dd>ripple through the name</dd><dt>Reduced motion</dt><dd>all wind and gusts off</dd></dl></div></div>
+    <div class="spec-grid"><div class="spec-group"><h3>Card</h3><dl><dt>Size</dt><dd>400 × 600 (2:3), max</dd><dt>Radius</dt><dd>12</dd><dt>Padding</dt><dd>22 22 18 (list) · 14 22 26 (detail)</dd><dt>Columns</dt><dd>40 % · 1fr, gap 10</dd><dt>Shadow</dt><dd>0 20 50 -24 · 45 %</dd><dt>Page</dt><dd><i style="background:#f6f6f6"></i>#F6F6F6</dd></dl></div><div class="spec-group"><h3>Masthead</h3><dl><dt>Text</dt><dd>“Autumn” · Newsreader Italic 60 / 60, −0.015em</dd><dt>Hover</dt><dd>each letter swings 6–10°, tint, 1.4 s</dd><dt>Motion</dt><dd>fades only; never gusts</dd></dl></div><div class="spec-group"><h3>Group row · expands</h3><dl><dt>Height</dt><dd>44 min, 6 between</dd><dt>Left slot</dt><dd>none</dd><dt>Line 1</dt><dd>Newsreader Italic 21 / 28</dd><dt>Right slot</dt><dd>icon 14: chevron › → minus when open</dd><dt>Enabled</dt><dd>chevron 42°</dd><dt>Hover</dt><dd>chevron 52°, +2 x · theme switches</dd><dt>Pressed</dt><dd>icon scale 0.8</dd><dt>Expanded</dt><dd>bars flatten to 12 wide · one group open at a time</dd></dl></div><div class="spec-group"><h3>Leaf row · goes deeper</h3><dl><dt>Grid</dt><dd>26 · 1fr · 14, gap 10</dd><dt>Left slot</dt><dd>number, Newsreader 12 old-style tabular, 80 %</dd><dt>Line 1</dt><dd>Newsreader Regular 16 / 28, one line</dd><dt>Right slot</dt><dd>chevron 12, stroke 1.5, shows on hover</dd><dt>Hover</dt><dd>1 px rule draws in 0.3 s · others 45 % · giant leaf cuts to this one</dd><dt>Pressed</dt><dd>name 1 px down</dd><dt>Focus</dt><dd>1.5 outline, 2 offset</dd></dl></div><div class="spec-group"><h3>Detail</h3><dl><dt>Back</dt><dd>Newsreader 14 / 20, 80 % → 100 %, chevron 11 slides 3</dd><dt>Name</dt><dd>Newsreader Italic 52 / 1.02, max 9ch</dd><dt>Note</dt><dd>Newsreader 15 / 22, 60 % wide, bottom right</dd><dt>Exit</dt><dd>Back or Esc</dd></dl></div><div class="spec-group"><h3>Themes · Crimson</h3><dl><dt>Ground</dt><dd><i style="background:#62331B"></i>#62331B</dd><dt>Leaf</dt><dd><i style="background:#C55129"></i>#C55129</dd><dt>Text</dt><dd><i style="background:#F9EAD6"></i>#F9EAD6</dd><dt>Tints</dt><dd><i style="background:#FF9A5C"></i>#FF9A5C <i style="background:#FFB347"></i>#FFB347 <i style="background:#FFBE55"></i>#FFBE55</dd></dl></div><div class="spec-group"><h3>Themes · Golden</h3><dl><dt>Ground</dt><dd><i style="background:#BF9B6B"></i>#BF9B6B</dd><dt>Leaf</dt><dd><i style="background:#F1CC82"></i>#F1CC82</dd><dt>Text</dt><dd><i style="background:#2E1806"></i>#2E1806</dd><dt>Tints</dt><dd><i style="background:#685000"></i>#685000 <i style="background:#6E5200"></i>#6E5200 <i style="background:#735A08"></i>#735A08</dd></dl></div><div class="spec-group"><h3>Themes · Bronze</h3><dl><dt>Ground</dt><dd><i style="background:#605407"></i>#605407</dd><dt>Leaf</dt><dd><i style="background:#391E03"></i>#391E03</dd><dt>Text</dt><dd><i style="background:#E7DACB"></i>#E7DACB</dd><dt>Tints</dt><dd><i style="background:#EDE6C0"></i>#EDE6C0 <i style="background:#D6CB8F"></i>#D6CB8F <i style="background:#C9BC74"></i>#C9BC74</dd></dl></div><div class="spec-group"><h3>Giant leaf</h3><dl><dt>Frame</dt><dd>x −20 %, y 6 %, 130 × 104 % (full bleed)</dd><dt>Swap</dt><dd>hard cut on hover, no scaling</dd><dt>Sway</dt><dd>spring k 14 · damping 2.2, bends from the stem</dd><dt>Range</dt><dd>still while a group is open · ~0.3° calm, ~2° in a gust</dd></dl></div><div class="spec-group"><h3>Wind</h3><dl><dt>Direction</dt><dd>random per visit, ±20° per gust</dd><dt>Breeze</dt><dd>cover (all groups closed) and leaf page, every 6–10 s, crosses card in 1.3 s</dd><dt>Lean</dt><dd>small text 9–15° · titles 3–5°</dd><dt>Riders</dt><dd>1–3 mid-word letters lift 9–15 px, 2.4–2.9 s</dd></dl></div><div class="spec-group"><h3>Flutter · hover</h3><dl><dt>Swing</dt><dd>14–22° small · 6–10° titles, damped</dd><dt>Duration</dt><dd>1.4 s, ease-out</dd><dt>Color</dt><dd>text → random theme tint → text</dd><dt>Direction</dt><dd>downwind first</dd></dl></div><div class="spec-group"><h3>Transitions · expand / page</h3><dl><dt>In</dt><dd>each word drifts 8 px from upwind + fades in, 0.46 s, reading order, +6–18 ms per word</dd><dt>Out</dt><dd>each word drifts 10 px downwind + fades out, 0.24 s</dd><dt>Same for</dt><dd>expand, collapse, opening a leaf, going back: titles, labels and text alike</dd><dt>Guard</dt><dd>hover swap waits for words to land; clicks queue</dd></dl></div><div class="spec-group"><h3>Flying letters</h3><dl><dt>Count</dt><dd>cover and leaf page, 4 at a time, Newsreader Italic 15–28</dd><dt>Fall</dt><dd>80–130 px/s, glide 50–95, swing 2.4–3.6 rad/s</dd><dt>Landing</dt><dd>every 8–13 s on a matching letter; original blows away</dd><dt>Color</dt><dd>theme tint, fades into the text over 6 s</dd></dl></div><div class="spec-group"><h3>Accessibility</h3><dl><dt>Keyboard</dt><dd>Tab rows, Enter opens, Esc back</dd><dt>Focus</dt><dd>ripple through the name</dd><dt>Reduced motion</dt><dd>all wind and gusts off</dd></dl></div></div>
   </section>
 </div>
 
@@ -293,44 +297,34 @@ function path(start, end, perp, sway, t) {           /* straight drift plus a de
   const s = Math.sin(t * Math.PI * 1.2) * (1 - t) * sway;
   return [start[0] + (end[0] - start[0]) * t + perp[0] * s, start[1] + (end[1] - start[1]) * t + perp[1] * s];
 }
-function gustIn(chs, base = 0, step = 14, theta = windDir()) {
+/* page transitions are light and uniform: every word (and every unsplit label) is carried by the same soft drift,
+   in from upwind and out downwind. No single letters tumbling; the tumbling belongs to the wind on the page itself. */
+const units = els => { const s = new Set(); els.forEach(e => e && s.add(e.closest?.('.w') || e)); return [...s]; };
+function gustIn(els, base = 0, step = 14, theta = windDir()) {
   if (reduce) return { done: Promise.resolve(), longest: 0 };
-  const tints = getComputedStyle(sleeve).getPropertyValue('--tints').split(',').map(x => x.trim()).filter(Boolean);
-  let last = Promise.resolve(), longest = 0;
-  chs.forEach((c, i) => {
-    const ink = getComputedStyle(c).color, tint = tints[(Math.random() * tints.length) | 0] || ink;
-    const ang = theta + rnd(-.4, .4), d = rnd(12, 30), dir = [Math.cos(ang), Math.sin(ang)], perp = [-dir[1], dir[0]];
-    const start = [-dir[0] * d, -dir[1] * d], sway = rnd(2, 6) * (Math.random() < .5 ? -1 : 1), r0 = rnd(-40, 40);
-    const k = [0, .3, .55, .8, 1].map((t, j) => {
-      const [x, y] = path(start, [0, 0], perp, sway, t);
-      const r = j === 4 ? 0 : r0 * (1 - t) * (j % 2 ? -.35 : 1);
-      return { transform: `translate(${x.toFixed(1)}px, ${y.toFixed(1)}px) rotate(${r.toFixed(1)}deg)`,
-        opacity: t === 0 ? 0 : 1, color: t === 1 ? ink : tint, offset: t };
-    });
-    const dur = rnd(800, 1150), delay = base + Math.min(i * step * .5, 160) + rnd(0, 120);
-    const a = c.animate(k, { duration: dur, delay, easing: 'cubic-bezier(.25,.5,.3,1)', fill: 'backwards' });
+  const dx = Math.cos(theta), dy = Math.sin(theta); let last = Promise.resolve(), longest = 0;
+  units(els).forEach((u, i) => {
+    const delay = base + Math.min(i * step * .6, 220), dur = 460;
+    const a = u.animate([{ opacity: 0, transform: `translate(${(-dx * 8).toFixed(1)}px, ${(-dy * 4 + 3).toFixed(1)}px)` }, { transform: 'none' }],
+      { duration: dur, delay, easing: 'cubic-bezier(.2,.7,.3,1)', fill: 'backwards' });
     if (dur + delay > longest) { longest = dur + delay; last = a.finished; }
   });
   return { done: last, longest };
 }
-function gustOut(chs, step = 8, theta = windDir()) {
+function gustOut(els, step = 8, theta = windDir(), single = false) {
   if (reduce) return { done: Promise.resolve(), longest: 0 };
-  let longest = 0;
-  const anims = chs.map((c, i) => {
-    const ang = theta + rnd(-.6, .6), d = rnd(30, 90), dir = [Math.cos(ang), Math.sin(ang)], perp = [-dir[1], dir[0]];
-    const end = [dir[0] * d, dir[1] * d], sway = rnd(4, 12) * (Math.random() < .5 ? -1 : 1), r1 = rnd(60, 200) * (Math.random() < .5 ? -1 : 1);
-    const k = [0, .35, .7, 1].map(t => { const [x, y] = path([0, 0], end, perp, sway, t);
-      return { transform: `translate(${x.toFixed(1)}px, ${y.toFixed(1)}px) rotate(${(r1 * t).toFixed(1)}deg)`, opacity: t < .35 ? 1 : 1 - (t - .35) / .65, offset: t }; });
-    const dur = rnd(520, 820), delay = Math.min(i * step * .5, 140) + rnd(0, 140);
-    longest = Math.max(longest, dur + delay);
-    return c.animate(k, { duration: dur, delay, easing: 'cubic-bezier(.4,.05,.65,.6)', fill: 'forwards' });
+  const dx = Math.cos(theta), dy = Math.sin(theta); let longest = 0;
+  const anims = (single ? els : units(els)).map((u, i) => {
+    const delay = Math.min(i * step * .3, 90), dur = 240; longest = Math.max(longest, dur + delay);
+    return u.animate([{ transform: 'none' }, { opacity: 0, transform: `translate(${(dx * 10).toFixed(1)}px, ${(dy * 4 - 2).toFixed(1)}px)` }],
+      { duration: dur, delay, easing: 'cubic-bezier(.5,0,.75,.4)', fill: 'forwards' });
   });
   return { done: Promise.all(anims.map(a => a.finished)), longest };
 }
 const fadeIn = (els, delay = 0) => els.forEach(el => el && !reduce && el.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 360, delay, fill: 'backwards' }));
 /* titles only answer the pointer; the wind (gusts, idle drift) moves the smaller text */
 const visibleLetters = root => [...root.querySelectorAll('.ch')].filter(c => c.offsetParent && !c.closest('.kwrap:not(.open), .title, .d-name'));
-const clear = els => els.forEach(c => c.getAnimations().forEach(a => a.cancel()));
+const clear = els => els.forEach(c => [c, c.closest?.('.w')].forEach(e => e && e.getAnimations().forEach(a => a.cancel())));
 
 async function toggleSide(btn) {
   const id = btn.dataset.sideId, wrap = btn.nextElementSibling, rows = [...wrap.querySelectorAll('.kids > li')];
@@ -366,36 +360,31 @@ async function openLeaf(id) {
   current = id; setSide(id); showLeaf(id);
   const L = LEAVES[id], theta = windDir();
   sleeve.classList.add('gusting');
-  const old = visibleLetters(print), { longest } = gustOut(old, 3, theta);
-  /* numbers, toggles and chevrons fade with the gust instead of waiting behind it */
-  const fixed = [...print.querySelectorAll('.title, .num, .tog, .chev')];
-  if (!reduce) fixed.forEach(el => el.animate([{ opacity: getComputedStyle(el).opacity }, { opacity: 0 }], { duration: 260, fill: 'forwards' }));
-  await sleep(longest * .45);                              /* the title starts drifting in while the list is still leaving */
+  const old = [...print.querySelectorAll('.title .ch'), ...visibleLetters(print)];
+  const fixed = [...print.querySelectorAll('.num, .tog')].filter(e => e.offsetParent && !e.closest('.kwrap:not(.open)'));
+  const { longest } = gustOut([...old, ...fixed], 3, theta);
+  await sleep(longest * .7);
   detail.innerHTML = `<button class="back" type="button" data-back>${chev}Autumn</button>
     <h2 class="d-name">${letters(L.name)}</h2><span></span><p class="d-fact">${letters(L.fact)}</p>`;
   print.classList.add('leaving'); sleeve.classList.add('detail-on');
-  /* the title simply appears; the small note is what the wind carries in */
-  fadeIn([detail.querySelector('.d-name'), detail.querySelector('.back')], 0);
-  /* the note settles in quietly; only a few letters are carried in on the wind, from upwind */
-  const fact = detail.querySelector('.d-fact'), chs = [...fact.querySelectorAll('.ch')];
-  fadeIn([fact], 160);
-  gustIn(chs.filter(c => /\w/.test(c.textContent)).sort(() => Math.random() - .5).slice(0, 8), 220, 40, theta);
+  /* back, name and note arrive the same way, in reading order */
+  gustIn([detail.querySelector('.back'), ...detail.querySelectorAll('.ch')], 0, 10, theta);
   detail.querySelector('[data-back]').focus({ preventScroll: true });
   /* busy stays on until the hand-off finishes, so a quick second click cannot interleave two transitions */
-  setTimeout(() => { print.classList.remove('leaving'); sleeve.classList.remove('gusting'); clear(old); clear(fixed); done(); }, longest * .6 + 60);
+  setTimeout(() => { print.classList.remove('leaving'); sleeve.classList.remove('gusting'); clear(old); clear(fixed); done(); }, longest + 40);
 }
 async function closeLeaf() {
   if (busy) { queued = () => current && closeLeaf(); return; } busy = true;
   const id = current; current = null; const theta = windDir();
-  const old = [...detail.querySelectorAll('.d-fact .ch')], { longest } = gustOut(old, 4, theta);
-  detail.querySelectorAll('.back, .d-name').forEach(el => !reduce && el.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 300, fill: 'forwards' }));
-  await sleep(longest * .45);
+  const { longest } = gustOut([detail.querySelector('.back'), ...detail.querySelectorAll('.ch')], 4, theta);
+  await sleep(longest * .7);
   detail.classList.add('leaving'); sleeve.classList.remove('detail-on');
-  settle(gustIn(visibleLetters(print), 0, 4, theta).longest);
-  const fixed = [...print.querySelectorAll('.num, .tog, .title, .chev')]; clear(fixed);
-  fadeIn(fixed, 200);
+  const back = [...print.querySelectorAll('.title .ch'), ...visibleLetters(print)];
+  const fixed = [...print.querySelectorAll('.num, .tog')].filter(e => e.offsetParent && !e.closest('.kwrap:not(.open)'));
+  clear([...back, ...fixed]);
+  settle(gustIn([...back, ...fixed], 0, 6, theta).longest);
   print.querySelector(`[data-leaf="${id}"]`)?.focus({ preventScroll: true });
-  setTimeout(() => { detail.classList.remove('leaving'); detail.innerHTML = ''; done(); }, longest * .6 + 60);
+  setTimeout(() => { detail.classList.remove('leaving'); detail.innerHTML = ''; done(); }, longest + 40);
 }
 
 /* while letters are still arriving, hovering does not swap the background; the last row hovered is applied once they land */
@@ -546,7 +535,7 @@ function flyTick() {
       f.el.style.transform = `translate(${f.x.toFixed(1)}px, ${f.y.toFixed(1)}px) rotate(${((f.r0 % 360) * (1 - e) + sw).toFixed(1)}deg)`;
       if (u >= 1 && !f.landed) {
         f.landed = true; f.el.style.opacity = 1;                                            /* it keeps its own color: the new letter is visibly a stranger */
-        const { longest } = gustOut([c], 0, windDir());                                    /* the original is blown off */
+        const { longest } = gustOut([c], 0, windDir(), true);                                    /* the original is blown off */
         const col = f.el.style.color;
         setTimeout(() => { clear([c]);
           /* the newcomer takes the original's place in its own color, then slowly blends into the text */
@@ -623,6 +612,10 @@ function idle() {
 /* ---------- slow motion: one clock for everything (WAAPI, CSS transitions, timers, the leaf and the flyers) ---------- */
 document.getElementById('slow').addEventListener('change', e => { SPEED = e.target.checked ? .25 : 1;
   document.getAnimations().forEach(a => { try { a.playbackRate = SPEED; } catch (_) {} }); });
+/* preview the page the way a dark-mode desktop shows it */
+const darkBox = document.getElementById('dark');
+darkBox.checked = matchMedia('(prefers-color-scheme: dark)').matches;
+darkBox.addEventListener('change', () => document.documentElement.dataset.theme = darkBox.checked ? 'dark' : 'light');
 const spec = document.getElementById('spec'), specBtn = document.getElementById('spec-btn');
 const setSpec = o => { spec.hidden = !o; specBtn.setAttribute('aria-expanded', o); };
 specBtn.addEventListener('click', () => setSpec(spec.hidden));
