@@ -92,7 +92,7 @@
   /* while a gust carries the letters off, the underline and chevrons go with them */
   .gusting .leafrow .t::after { transform: scaleX(0) !important; transition-duration: .12s !important; }
   .gusting .leafrow .chev { opacity: 0 !important; }
-  .ch { display: inline-block; white-space: pre; transform-origin: 50% 0; }
+  .ch { display: inline-block; white-space: pre; transform-origin: 50% 0; color: var(--ink); transition: color .3s ease; }   /* each letter reads the theme color itself, so none is left behind on a theme switch */
   .leafrow .num { font-size: 12px; }
   .leafrow .t::after { content: ""; position: absolute; left: 0; right: 0; bottom: 5px; height: 1px; background: currentColor;
     transform: scaleX(0); transform-origin: 0 50%; transition: transform .14s var(--in); }
@@ -562,7 +562,7 @@ function flyTick() {
       const cx = f.x + f.size * .3, cy = f.y + f.size * .5;
       /* most knocks only swing the letter; now and then one takes the group's color, so the text mostly stays itself */
       if (now > (f.hitAt || 0)) flyTick.rects.forEach(o => { if (now > (f.hitAt || 0) && Math.hypot(o.x - cx, o.y - cy) < o.rr + f.size * .35 && !o.c.getAnimations().length) {
-        f.hitAt = now + 900; flutter(o.c, false, .8, o.rr < 20 && Math.random() < .3); } });
+        f.hitAt = now + 900; flutter(o.c, false, .8, false); } });
     }
     f.ph += f.w * dt;
     const swing = Math.sin(f.ph), turn = Math.abs(Math.cos(f.ph));
@@ -595,18 +595,20 @@ function idle() {
   /* one to three letters ride the gust a little further: from the middle of longer words, so every word still reads */
   const riders = new Set(chs.filter(c => { const w = [...c.parentNode.children]; const k = w.indexOf(c);
       return w.length >= 5 && k > 0 && k < w.length - 1 && /[a-z]/.test(c.textContent) && parseFloat(getComputedStyle(c).fontSize) <= 30; })
-    .sort(() => Math.random() - .5).slice(0, 1 + ((Math.random() * 3) | 0)));
+    .sort(() => Math.random() - .5).slice(0, Math.random() < .6 ? 1 : 2));   /* one, sometimes two: the sentence stays readable */
   chs.forEach((c, i) => {
     if (riders.has(c)) {
       const d = rnd(9, 15) * gust, r = rnd(50, 110) * WX, x = dx * d, y = dy * d * .5 - rnd(5, 8);
-      return c.animate([{ transform: 'none' }, { transform: `translate(${(x * .5).toFixed(1)}px, ${(y * .6).toFixed(1)}px) rotate(${(r * .4).toFixed(0)}deg)`, offset: .2 },
-        { transform: `translate(${x.toFixed(1)}px, ${y.toFixed(1)}px) rotate(${r.toFixed(0)}deg)`, offset: .4 },
-        { transform: `translate(${(x * 1.1).toFixed(1)}px, ${(y * .85).toFixed(1)}px) rotate(${(r * .7).toFixed(0)}deg)`, offset: .58 },   /* hangs in the air */
-        { transform: `translate(${(x * .35).toFixed(1)}px, ${(y * .3).toFixed(1)}px) rotate(${(-r * .15).toFixed(0)}deg)`, offset: .82 }, { transform: 'none' }],
+      /* a letter only changes color when the wind actually lifts it: it takes one of the group's tints while airborne */
+      const tl = getComputedStyle(sleeve).getPropertyValue('--tints').split(',').map(v => v.trim()).filter(Boolean), tc = { color: tl[(Math.random() * tl.length) | 0] };
+      c.animate([{ transform: 'none' }, { transform: `translate(${(x * .5).toFixed(1)}px, ${(y * .6).toFixed(1)}px) rotate(${(r * .4).toFixed(0)}deg)`, ...tc, offset: .2 },
+        { transform: `translate(${x.toFixed(1)}px, ${y.toFixed(1)}px) rotate(${r.toFixed(0)}deg)`, ...tc, offset: .4 },
+        { transform: `translate(${(x * 1.1).toFixed(1)}px, ${(y * .85).toFixed(1)}px) rotate(${(r * .7).toFixed(0)}deg)`, ...tc, offset: .58 },   /* hangs in the air */
+        { transform: `translate(${(x * .35).toFixed(1)}px, ${(y * .3).toFixed(1)}px) rotate(${(-r * .15).toFixed(0)}deg)`, ...tc, offset: .82 }, { transform: 'none' }],
         { duration: rnd(2400, 2900), delay: (at[i] - lo) / span * 1300, easing: 'ease-in-out' });
-      /* on its way out it knocks into the letters downwind of it; they swing and take the group's color */
+      /* on its way out it knocks into the letters downwind of it; they only swing, they keep their color */
       const sib = [...c.parentNode.children], k = sib.indexOf(c), hit = WX > 0 ? sib.slice(k + 1, k + 3) : sib.slice(Math.max(0, k - 2), k).reverse();
-      hit.forEach((h, j) => setTimeout(() => flutter(h, true, .8 - j * .25, j === 0 && Math.random() < .5), (at[i] - lo) / span * 1300 + 500 + j * 120));
+      hit.forEach((h, j) => setTimeout(() => flutter(h, true, .7 - j * .25, false), (at[i] - lo) / span * 1300 + 500 + j * 120));
       return;
     }
     const big = parseFloat(getComputedStyle(c).fontSize) > 30, a = (big ? rnd(3, 5) : rnd(9, 15)) * WX * gust, d = (big ? 1.5 : 3) * gust;
